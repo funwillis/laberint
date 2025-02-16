@@ -7,48 +7,123 @@
   <!-- Iconos FontAwesome (opcional) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    /* Debug box fijo y centrado en la parte superior */
-    #debugBox {
-      position: fixed;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      border: 2px solid blue;
-      padding: 10px;
-      background: #f0f8ff;
-      text-align: center;
-      display: none; /* se muestra cuando se use el botón aleatorio */
-    }
-
-    /* Centrado completo de la página */
+    /* =========================
+       ESTRUCTURA PRINCIPAL
+       ========================= */
     html, body {
-      height: 100vh;
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: sans-serif;
+      height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
     }
-    /* Distribución en 3 columnas: tabla, controles y log */
-    .main-container {
-      display: grid;
-      grid-template-columns: auto auto auto;
-      gap: 50px;
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
-    .grid-container {
+
+    /* =========================
+       FILA 1: DEBUG BOX
+       ========================= */
+    .debug-row {
+      flex: 0 0 auto;
+      width: 100%;
+    }
+    /* Cuadro de debug con dimensiones fijas (100% ancho, 120px alto).
+       Contiene un título, la imagen (40x40) y el nombre de la baldosa. */
+    #debugBox {
+      width: 100%;
+      height: 120px;
+      box-sizing: border-box;
+      border: 2px solid blue;
+      background: #f0f8ff;
+      text-align: center;
+      padding: 10px;
+      position: relative;
+      overflow: hidden; /* evita que la imagen se salga */
+    }
+    #debugTitle {
+      margin: 5px 0;
+      font-weight: bold;
+    }
+    #debugImage {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      margin: 5px;
+      visibility: hidden; /* inicialmente oculto, para que el recuadro no cambie de tamaño */
+    }
+    #debugName {
+      margin: 0;
+      padding: 0;
+    }
+
+    /* =========================
+       FILA 2: TRES COLUMNAS
+       ========================= */
+    .second-row-container {
+      flex: 1;              
+      display: flex;
+      width: 100%;
+    }
+
+    /* Columna 1 (tabla): 50% */
+    .grid-column {
+      flex: 0 0 50%;
       position: relative;
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
+    }
+    /* Columna 2 (controles): 25% */
+    .controls-container {
+      flex: 0 0 25%;
+      box-sizing: border-box;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    /* Columna 3 (log): 25% */
+    .log-container {
+      flex: 0 0 25%;
+      box-sizing: border-box;
+      padding: 20px;
+    }
+    .log-container h3 {
+      margin-top: 0;
+      text-align: center;
+    }
+    #logList {
+      list-style: none;
+      padding: 5px;
+      max-height: calc(100vh - 180px);
+      /* espacio para que no solape con debug ni la cabecera de log */
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      font-family: monospace;
+    }
+    #logList li {
+      margin: 4px 0;
+    }
+
+    /* =========================
+       TABLA Y NUMERACIÓN
+       ========================= */
+    .grid-container {
+      position: relative;
     }
     table {
       border-collapse: collapse;
-      margin: 0;
-      padding: 0;
-      text-align: center;
+      position: relative;
+      z-index: 1;
     }
-    /* Cada celda fija en 40x40 */
     td {
       border: 1px solid black;
       width: 40px;
@@ -57,7 +132,6 @@
       position: relative;
       overflow: hidden;
     }
-    /* Numeración de filas y columnas */
     .num-row, .num-col {
       position: absolute;
       font-weight: bold;
@@ -68,59 +142,44 @@
       justify-content: center;
       align-items: center;
       box-sizing: border-box;
+      background: rgba(255,255,255,0.8);
     }
     .num-row { left: -40px; }
     .num-col { top: -40px; }
-    /* Panel de controles */
-    .controls-container {
-      width: 300px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .slider-container {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .separator {
-      width: 100%;
-      height: 2px;
-      background-color: black;
-      margin: 10px 0;
-    }
-    /* Contenedor para los 8 controles */
+
+    /* =========================
+       CONTROLES DE BALDOSA
+       ========================= */
     #tilesContainer {
       width: 100%;
-      margin-bottom: 20px;
+      margin-top: 10px;
     }
-    /* Cada control de baldosa */
     .tile-control {
       display: flex;
       align-items: center;
-      margin-bottom: 10px;
       gap: 5px;
-      cursor: pointer; /* toda la zona es clicable para seleccionar */
+      margin-bottom: 10px;
+      cursor: pointer;
     }
-    /* Zona de sliders: evita propagación para no cambiar el radio */
-    .slider-group {
+    .slider-container-tile {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 5px;
       cursor: default;
     }
-    .slider-group input[type="number"] {
+    .slider-group, .pool-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .slider-group input[type="number"],
+    .pool-group input[type="number"] {
       width: 45px;
       text-align: center;
     }
-    /* Nuevo grupo de slider para mostrar el pool restante (solo para normales) */
-    .remaining-group {
-      display: none; /* se mostrará al iniciar la partida */
-      margin-left: 10px;
-    }
-    .remaining-group input {
-      width: 45px;
-      text-align: center;
+    /* Por defecto la fila "pool-group" está oculta; se muestra al iniciar el juego */
+    .pool-group {
+      display: none;
     }
     .tile-control img {
       width: 40px;
@@ -136,108 +195,116 @@
       margin-left: 5px;
       cursor: pointer;
     }
-    .color-container {
-      margin-bottom: 20px;
-      text-align: center;
-    }
     .button-row {
       display: flex;
       justify-content: center;
       gap: 10px;
+      margin-top: 10px;
     }
-    /* Botones */
-    #resetButton, #randomButton {
+    #confirmButton, #randomButton, #resetButton {
+      padding: 5px 10px;
+      font-size: 1em;
+    }
+    #randomButton, #resetButton {
       display: none;
     }
-    /* Log de cambios: se coloca en la tercera columna con margen superior negativo */
-    .log-container {
-      width: 200px;
-      margin-top: -50px;
-    }
-    .log-container h3 {
-      margin-top: 0;
-      text-align: center;
-    }
-    #logList {
-      list-style: none;
-      padding: 5px;
-      max-height: 400px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
-      font-family: monospace;
-    }
-    #logList li { margin: 4px 0; }
   </style>
 </head>
 <body>
-  <!-- Debug box -->
-  <div id="debugBox"></div>
+  <div class="container">
+    <!-- FILA 1: DEBUG BOX -->
+    <div class="debug-row">
+      <div id="debugBox">
+        <h4 id="debugTitle">Celda aleatoria</h4>
+        <img id="debugImage" src="" alt="Baldosa aleatoria">
+        <p id="debugName"></p>
+      </div>
+    </div>
 
-  <div class="main-container">
-    <!-- Columna 1: Tabla -->
-    <div class="grid-container">
-      <table id="grid">
-        <tbody>
+    <!-- FILA 2: Tres columnas (tabla, controles, log) -->
+    <div class="second-row-container">
+      <!-- COLUMNA 1: Tabla (50%) -->
+      <div class="grid-column">
+        <div class="grid-container">
+          <table id="grid">
+            <tbody>
+              <script>
+                // Generar la tabla 12x12
+                for (let i = 1; i <= 12; i++) {
+                  document.write("<tr>");
+                  for (let j = 1; j <= 12; j++) {
+                    document.write(`<td data-row="${i}" data-col="${j}"></td>`);
+                  }
+                  document.write("</tr>");
+                }
+              </script>
+            </tbody>
+          </table>
           <script>
-            // Numeración de filas
+            // Añadir la numeración (filas y columnas)
             for (let i = 1; i <= 12; i++) {
-              document.write(`<div class="num-row" style="top: ${(i-1)*40}px;">${i}</div>`);
+              document.write(`
+                <div class="num-row" style="top: ${(i - 1) * 40}px;">${i}</div>
+              `);
             }
-            // Numeración de columnas
             for (let i = 1; i <= 12; i++) {
-              document.write(`<div class="num-col" style="left: ${(i-1)*40}px;">${i}</div>`);
-            }
-            // Crear filas y columnas con data-row y data-col
-            for (let i = 1; i <= 12; i++) {
-              document.write("<tr>");
-              for (let j = 1; j <= 12; j++) {
-                document.write(`<td data-row="${i}" data-col="${j}"></td>`);
-              }
-              document.write("</tr>");
+              document.write(`
+                <div class="num-col" style="left: ${(i - 1) * 40}px;">${i}</div>
+              `);
             }
           </script>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Columna 2: Controles -->
-    <div class="controls-container">
-      <!-- Control de dificultad -->
-      <div class="slider-container">
-        <label for="range">Dificultad:</label>
-        <div class="slider-group">
-          <input type="range" id="range" min="0" max="10" value="5" oninput="document.getElementById('rangeValue').value=this.value">
-          <input type="number" id="rangeValue" min="0" max="10" value="5" oninput="document.getElementById('range').value=this.value">
         </div>
       </div>
-      <div class="separator"></div>
 
-      <!-- Controles para cada tipo (normales y especiales) -->
-      <div id="tilesContainer"></div>
+      <!-- COLUMNA 2: Controles (25%) -->
+      <div class="controls-container">
+        <label for="range">Dificultad:</label>
+        <div class="slider-group">
+          <input
+            type="range"
+            id="range"
+            min="0"
+            max="10"
+            value="5"
+            oninput="document.getElementById('rangeValue').value=this.value"
+          >
+          <input
+            type="number"
+            id="rangeValue"
+            min="0"
+            max="10"
+            value="5"
+            oninput="document.getElementById('range').value=this.value"
+          >
+        </div>
 
-      <!-- Selector de color para pintar un círculo (Shift+Click) -->
-      <div class="color-container">
-        <label for="circleColor">Color de círculo:</label>
-        <input type="color" id="circleColor" value="#ff0000">
+        <div id="tilesContainer"></div>
+
+        <div class="color-container">
+          <label for="circleColor">Color de círculo:</label>
+          <input type="color" id="circleColor" value="#ff0000">
+        </div>
+
+        <div class="button-row">
+          <button id="confirmButton" onclick="confirmConfig()">Confirmar</button>
+          <button id="randomButton" onclick="randomButtonHandler()">Baldosa Aleatoria</button>
+          <button id="resetButton" onclick="resetToEditor()">Resetear</button>
+        </div>
       </div>
 
-      <!-- Botones: Confirmar, Baldosa Aleatoria y Resetear -->
-      <div class="button-row">
-        <button id="confirmButton" onclick="confirmConfig()">Confirmar</button>
-        <button id="randomButton" onclick="randomButtonHandler()">Baldosa Aleatoria</button>
-        <button id="resetButton" onclick="resetToEditor()">Resetear</button>
+      <!-- COLUMNA 3: Log (25%) -->
+      <div class="log-container">
+        <h3>Log de cambios</h3>
+        <ul id="logList"></ul>
       </div>
-    </div>
-
-    <!-- Columna 3: Log de cambios -->
-    <div class="log-container">
-      <h3>Log de cambios</h3>
-      <ul id="logList"></ul>
     </div>
   </div>
 
   <script>
-    /* JSON definido como constante en la misma página */
+    /*
+      Definimos el "JSON" como una constante en el mismo archivo.
+      Combinar "normales" (5) y "especiales" (3) => 8 tipos
+    */
     const CASILLAS = {
       "normales": [
         {
@@ -300,77 +367,84 @@
         }
       ]
     };
-
-    // Combinamos normales y especiales para obtener 8 tipos
     const tileTypes = CASILLAS.normales.concat(CASILLAS.especiales);
 
-    let selectedTileIndex = 0; // Índice del tipo seleccionado
-    let isGameMode = false;    // Modo juego activo o no
-    let poolCounts;            // Pools para los 5 tipos normales
+    let selectedTileIndex = 0; // índice de la baldosa seleccionada
+    let isGameMode = false;    // indica si estamos en modo juego
+    let poolCounts;            // array con los pools de las 5 baldosas normales
 
-    // Generamos controles para cada tipo
+    // Generar los 8 controles de casilla
     generateTileControls(tileTypes);
     function generateTileControls(types) {
       const container = document.getElementById("tilesContainer");
-      let html = "";
+      let html = "<h3 style='margin-bottom:10px;'>Tipos de Casilla</h3>";
       types.forEach((tipo, index) => {
-        // Para los 5 primeros (normales) agregamos un grupo extra de "restante"
-        let remainingHTML = "";
+        // Para los 5 primeros (normales), se añade un .pool-group debajo
+        let poolRow = "";
         if (index < 5) {
-          remainingHTML = `
-            <div class="remaining-group" style="display:none;">
+          poolRow = `
+            <div class="pool-group">
               <input type="range" class="remaining-slider" min="0" max="100" value="50" disabled>
               <input type="number" class="remaining-number" min="0" max="100" value="50" disabled>
             </div>
           `;
         }
         html += `
-          <div class="tile-control" onclick="document.getElementById('radio${index}').checked = true; selectedTileIndex=${index};">
-            <div class="slider-group" onclick="event.stopPropagation();">
-              <input type="range" min="0" max="100" value="50" oninput="this.nextElementSibling.value=this.value">
-              <input type="number" min="0" max="100" value="50" oninput="this.previousElementSibling.value=this.value">
+          <div class="tile-control" onclick="document.getElementById('radio${index}').checked=true; selectedTileIndex=${index};">
+            <div class="slider-container-tile" onclick="event.stopPropagation();">
+              <!-- Sliders de configuración (arriba) -->
+              <div class="slider-group">
+                <input type="range" min="0" max="100" value="50"
+                       oninput="this.nextElementSibling.value=this.value">
+                <input type="number" min="0" max="100" value="50"
+                       oninput="this.previousElementSibling.value=this.value">
+              </div>
+              <!-- Sliders de pool (restante), inicialmente ocultos -->
+              ${poolRow}
             </div>
-            ${remainingHTML}
             <img src="${tipo.imagen}" alt="${tipo.nombre}">
             <span class="tile-name">${tipo.nombre}</span>
-            <input type="radio" class="image-radio" name="tileOption" id="radio${index}" value="${index}" ${index===0?"checked":""}>
+            <input type="radio" class="image-radio" name="tileOption"
+                   id="radio${index}" value="${index}" ${index===0?"checked":""}>
           </div>
         `;
       });
       container.innerHTML = html;
     }
 
-    // Al pulsar "Confirmar" se bloquean los sliders originales y se muestran los "restante"
+    // Al pulsar Confirmar:
+    // - Bloqueamos los sliders de configuración (arriba)
+    // - Tomamos sus valores para poolCounts (5 primeros)
+    // - Mostramos la .pool-group con dichos valores
+    // - Mostramos los botones "Baldosa Aleatoria" y "Resetear"
+    // - Modo juego activo
     function confirmConfig() {
-      // Bloquear sliders originales
-      document.querySelectorAll("#tilesContainer .slider-group input").forEach(elem => {
-        elem.disabled = true;
-      });
-      // Inicializar poolCounts para los 5 tipos normales y mostrar los sliders restantes
-      poolCounts = [];
       const tileControls = document.querySelectorAll("#tilesContainer .tile-control");
+      poolCounts = [];
       for (let i = 0; i < 5; i++) {
-        const rangeVal = parseInt(tileControls[i].querySelector(".slider-group input[type='range']").value);
-        poolCounts[i] = rangeVal;
-        // Mostrar el grupo restante y establecer su valor
-        const remGroup = tileControls[i].querySelector(".remaining-group");
-        if (remGroup) {
-          remGroup.style.display = "inline-block";
-          remGroup.querySelector(".remaining-slider").value = rangeVal;
-          remGroup.querySelector(".remaining-number").value = rangeVal;
+        const configSlider = tileControls[i].querySelector(".slider-group input[type='range']");
+        const val = parseInt(configSlider.value);
+        poolCounts[i] = val;
+        // Bloqueamos sliders de configuración
+        tileControls[i].querySelectorAll(".slider-group input").forEach(el => el.disabled = true);
+        // Mostramos y asignamos valor a la .pool-group
+        const poolGroup = tileControls[i].querySelector(".pool-group");
+        if (poolGroup) {
+          poolGroup.style.display = "flex";
+          const rangePool = poolGroup.querySelector(".remaining-slider");
+          const numberPool = poolGroup.querySelector(".remaining-number");
+          rangePool.value = val;
+          numberPool.value = val;
         }
       }
-      // Mostrar botones "Resetear" y "Baldosa Aleatoria"
       document.getElementById("confirmButton").style.display = "none";
-      document.getElementById("resetButton").style.display = "inline";
       document.getElementById("randomButton").style.display = "inline";
-      // Mostrar el debug box (vacío inicialmente)
-      document.getElementById("debugBox").style.display = "block";
-      activateGameMode();
+      document.getElementById("resetButton").style.display = "inline";
       isGameMode = true;
+      activateGameMode();
     }
 
-    // Añade eventos a cada celda de la tabla
+    // Asigna eventos de click/contextmenu en cada celda
     function activateGameMode() {
       document.querySelectorAll("#grid td").forEach(cell => {
         cell.addEventListener("click", leftClickHandler);
@@ -378,26 +452,29 @@
       });
     }
 
-    // Función para agregar una línea al log (inserciones manuales)
+    // Log de cambios (inserciones manuales)
     function addLog(row, col, tileName) {
       const li = document.createElement("li");
       li.textContent = `celda (${row},${col}): ${tileName}`;
       document.getElementById("logList").appendChild(li);
     }
-    // Función para loguear la selección aleatoria
+
+    // Log de cambios (aleatorio): "50 -> 49 (curva)"
     function addLogRandom(prev, curr, tileName) {
       const li = document.createElement("li");
       li.textContent = `${prev} -> ${curr} (${tileName})`;
       document.getElementById("logList").appendChild(li);
     }
 
-    // Click izquierdo en celda:
-    // - Shift+Click: dibuja un círculo (sin log)
-    // - Click normal: inserta/rota la imagen (si se inserta o reemplaza, se loguea)
+    // Click izquierdo en una celda:
+    // - Shift => círculo (sin log)
+    // - Normal => insertar/rotar baldosa (log si se inserta/reemplaza)
     function leftClickHandler(e) {
       if (!isGameMode) return;
       const row = this.dataset.row;
       const col = this.dataset.col;
+
+      // Shift => círculo
       if (e.shiftKey) {
         this.innerHTML = "";
         const circle = document.createElement("div");
@@ -408,45 +485,48 @@
         this.appendChild(circle);
         return;
       }
-      if (!tileTypes[selectedTileIndex]) return;
-      const selectedTile = tileTypes[selectedTileIndex];
+
+      // Baldosa
+      const tile = tileTypes[selectedTileIndex];
       let img = this.querySelector("img");
       if (img) {
-        if (img.getAttribute("src") === selectedTile.imagen) {
-          // Rotación: no se loguea
-          let currentRotation = parseInt(img.dataset.rotation) || 0;
-          currentRotation = (currentRotation + 90) % 360;
-          img.style.transform = `rotate(${currentRotation}deg)`;
-          img.dataset.rotation = currentRotation;
+        // Si es la misma imagen => rotar 90°
+        if (img.src.endsWith(tile.imagen)) {
+          let rotation = parseInt(img.dataset.rotation) || 0;
+          rotation = (rotation + 90) % 360;
+          img.style.transform = `rotate(${rotation}deg)`;
+          img.dataset.rotation = rotation;
         } else {
-          img.setAttribute("src", selectedTile.imagen);
+          // Reemplazar => log
+          img.src = tile.imagen;
           img.style.transform = "rotate(0deg)";
           img.dataset.rotation = 0;
-          addLog(row, col, selectedTile.nombre);
+          addLog(row, col, tile.nombre);
         }
       } else {
+        // Insertar => log
         img = document.createElement("img");
-        img.src = selectedTile.imagen;
+        img.src = tile.imagen;
         img.style.width = "100%";
         img.style.height = "100%";
         img.style.objectFit = "cover";
         img.style.transform = "rotate(0deg)";
         img.dataset.rotation = 0;
         this.appendChild(img);
-        addLog(row, col, selectedTile.nombre);
+        addLog(row, col, tile.nombre);
       }
     }
 
-    // Click derecho en celda: limpia contenido (sin log)
+    // Click derecho => limpiar (sin log)
     function rightClickHandler(e) {
       if (!isGameMode) return;
       e.preventDefault();
       this.innerHTML = "";
     }
 
-    // Botón "Baldosa Aleatoria": elige aleatoriamente uno de los 5 tipos normales (si pool > 0)
+    // Botón "Baldosa Aleatoria"
+    // Selecciona un tipo normal (0..4) con pool > 0, decrementa, actualiza pool-group, log y debug box
     function randomButtonHandler() {
-      // Recolectamos índices disponibles (pool > 0)
       const available = [];
       for (let i = 0; i < 5; i++) {
         if (poolCounts[i] > 0) available.push(i);
@@ -457,45 +537,55 @@
       }
       const randIndex = available[Math.floor(Math.random() * available.length)];
       const prevCount = poolCounts[randIndex];
-      poolCounts[randIndex]--; // decrementamos el pool
+      poolCounts[randIndex]--;
 
-      // Actualizamos la visualización del pool restante en el control correspondiente
+      // Actualizar pool-group
       const tileControl = document.querySelectorAll("#tilesContainer .tile-control")[randIndex];
-      const remSlider = tileControl.querySelector(".remaining-slider");
-      const remNumber = tileControl.querySelector(".remaining-number");
-      remSlider.value = poolCounts[randIndex];
-      remNumber.value = poolCounts[randIndex];
+      const rangePool = tileControl.querySelector(".remaining-slider");
+      const numberPool = tileControl.querySelector(".remaining-number");
+      rangePool.value = poolCounts[randIndex];
+      numberPool.value = poolCounts[randIndex];
 
-      // Actualizamos la selección: activamos el radio button correspondiente
+      // Actualizar la selección
       selectedTileIndex = randIndex;
       document.getElementById("radio" + randIndex).checked = true;
 
-      // Mostrar el debug box en la parte superior (ya está fijo y centrado)
-      const debugBox = document.getElementById("debugBox");
-      debugBox.innerHTML = `<h4>Celda aleatoria</h4>
-                            <p>${tileTypes[randIndex].nombre}</p>
-                            <img src="${tileTypes[randIndex].imagen}" alt="${tileTypes[randIndex].nombre}" style="width:40px; height:40px; object-fit:cover;">`;
-      // Se mantiene visible por un rato (opcional)
-      setTimeout(() => { debugBox.innerHTML = ""; }, 3000);
+      // Mostrar en debug box (fijo)
+      const debugImage = document.getElementById("debugImage");
+      const debugName = document.getElementById("debugName");
+      debugImage.src = tileTypes[randIndex].imagen;
+      debugImage.style.visibility = "visible";
+      debugName.textContent = tileTypes[randIndex].nombre;
 
-      // Agregar log: "prev -> curr (nombre)"
+      // Log
       addLogRandom(prevCount, poolCounts[randIndex], tileTypes[randIndex].nombre);
     }
 
-    // Resetear: volver a modo editor, limpiar tabla, log y debug, y reactivar controles
+    // Botón "Resetear" => volver a modo editor
     function resetToEditor() {
-      // Reactivar los sliders originales
-      document.querySelectorAll("#tilesContainer .slider-group input").forEach(elem => {
-        elem.disabled = false;
-      });
+      // Reactivar sliders de config, ocultar pool-group
+      const tileControls = document.querySelectorAll("#tilesContainer .tile-control");
+      for (let i = 0; i < tileControls.length; i++) {
+        tileControls[i].querySelectorAll(".slider-group input").forEach(el => el.disabled = false);
+        const poolGroup = tileControls[i].querySelector(".pool-group");
+        if (poolGroup) {
+          poolGroup.style.display = "none";
+        }
+      }
+      // Ocultar/mostrar botones
       document.getElementById("confirmButton").style.display = "inline";
-      document.getElementById("resetButton").style.display = "none";
       document.getElementById("randomButton").style.display = "none";
-      document.querySelectorAll("#grid td").forEach(cell => {
-        cell.innerHTML = "";
-      });
+      document.getElementById("resetButton").style.display = "none";
+
+      // Limpiar tabla y log
+      document.querySelectorAll("#grid td").forEach(cell => cell.innerHTML = "");
       document.getElementById("logList").innerHTML = "";
-      document.getElementById("debugBox").innerHTML = "";
+
+      // Limpiar debug box (pero no lo ocultamos; sigue con la misma altura)
+      document.getElementById("debugImage").style.visibility = "hidden";
+      document.getElementById("debugImage").src = "";
+      document.getElementById("debugName").textContent = "";
+
       isGameMode = false;
     }
   </script>
