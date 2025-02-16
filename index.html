@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tabla 12x12 con Controles</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+  />
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .main-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 50px;
+    }
+    /* Ajuste contenedor de la tabla */
+    .grid-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 0;
+      padding: 0;
+    }
+    /* Cada celda mide 40px totales (borde incluido) */
+    td {
+      border: 1px solid black;
+      width: 40px;
+      height: 40px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    /* Numeración de filas y columnas */
+    .num-row, .num-col {
+      position: absolute;
+      font-weight: bold;
+      font-family: monospace;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    /* Fila: se ubica a la izquierda de la tabla */
+    .num-row {
+      left: -40px;
+    }
+    /* Columna: se ubica encima de la tabla */
+    .num-col {
+      top: -40px;
+    }
+
+    .controls-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 250px;
+    }
+    .slider-container, .form-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .separator {
+      width: 100%;
+      height: 2px;
+      background-color: black;
+      margin: 10px 0;
+    }
+    .confirm-button {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    input[type="number"] {
+      width: 50px;
+      text-align: center;
+    }
+    /* Ajuste de los selectores de imagen */
+    .image-upload {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+    }
+    .image-upload img {
+      width: 100%;
+      height: 100%;
+      display: none;
+    }
+    .image-upload .icon {
+      box-sizing: border-box;
+      font-size: 14px;
+      border: 1px solid black;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+  <script>
+    function showSummary() {
+      let difficulty = document.getElementById("rangeValue").value;
+      let values = [];
+      document
+        .querySelectorAll(".form-container input[type='number']")
+        .forEach(input => values.push(input.value));
+      let summary = `Dificultad: ${difficulty}\nValores: ${values.join(", ")}`;
+      alert(summary);
+    }
+
+    function previewImage(event, imgElement, iconElement) {
+      let reader = new FileReader();
+      reader.onload = function() {
+        imgElement.src = reader.result;
+        imgElement.style.display = "block";
+        iconElement.style.display = "none";
+      };
+      reader.readAsDataURL(event.target.files[0]);
+    }
+  </script>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Contenedor de la tabla y sus números -->
+    <div class="grid-container">
+      <table>
+        <tbody>
+          <script>
+            // Numeración de filas
+            for (let i = 1; i <= 12; i++) {
+              document.write(`
+                <div class="num-row" style="top: ${(i - 1) * 40}px;">${i}</div>
+              `);
+            }
+            // Numeración de columnas
+            for (let i = 1; i <= 12; i++) {
+              document.write(`
+                <div class="num-col" style="left: ${(i - 1) * 40}px;">${i}</div>
+              `);
+            }
+            // Crear las filas y columnas de la tabla
+            for (let i = 1; i <= 12; i++) {
+              document.write("<tr>");
+              for (let j = 1; j <= 12; j++) {
+                document.write("<td></td>");
+              }
+              document.write("</tr>");
+            }
+          </script>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Controles a la derecha -->
+    <div class="controls-container">
+      <div class="slider-container">
+        <label for="range">Dificultad:</label>
+        <div class="slider-group">
+          <input
+            type="range"
+            id="range"
+            min="0"
+            max="10"
+            value="5"
+            oninput="document.getElementById('rangeValue').value = this.value"
+          />
+          <input
+            type="number"
+            id="rangeValue"
+            min="0"
+            max="10"
+            value="5"
+            oninput="document.getElementById('range').value = this.value"
+          />
+        </div>
+      </div>
+      <div class="separator"></div>
+      <div class="form-container">
+        <form>
+          <script>
+            for (let i = 1; i <= 4; i++) {
+              document.write(`
+                <label>
+                  <div class="slider-group">
+                    <input type="range" min="0" max="100" value="50"
+                      oninput="this.nextElementSibling.value = this.value">
+                    <input type="number" min="0" max="100" value="50"
+                      oninput="this.previousElementSibling.value = this.value">
+                    
+                    <label class="image-upload">
+                      <!-- OJO: usamos parentElement.querySelector para evitar problemas con nextSibling -->
+                      <input type="file" accept="image/*"
+                        onchange="previewImage(event, this.parentElement.querySelector('img'), this.parentElement.querySelector('i'))"
+                        style="display:none;">
+                      <i class="fa fa-image icon"></i>
+                      <img src="" alt="Seleccionar imagen">
+                    </label>
+                  </div>
+                </label><br>
+              `);
+            }
+          </script>
+        </form>
+      </div>
+      <div class="confirm-button">
+        <button onclick="showSummary()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
