@@ -5,35 +5,35 @@
       "aristas": 4,
       "anguloEntreAristas": 90,
       "notas": "Ir a cualquiera de las 4 casillas adyacentes en 90°",
-      "imagen": "assets/mapa/01-tancat.jpg"
+      "imagen": "assets/mapa/03-crueta4.jpg"
     },
     {
       "nombre": "curva",
       "aristas": 2,
       "anguloEntreAristas": 90,
       "notas": "Ir a 2 casillas adyacentes en 90°",
-      "imagen": "assets/mapa/miau.png"
+      "imagen": "assets/mapa/04-curva.jpg"
     },
     {
       "nombre": "bifurcacion",
       "aristas": 3,
       "anguloEntreAristas": 90,
       "notas": "Ir a 3 casillas adyacentes en 90°",
-      "imagen": "assets/mapa/miau.png"
+      "imagen": "assets/mapa/02-crueta3.jpg"
     },
     {
       "nombre": "recta",
       "aristas": 2,
       "anguloEntreAristas": 180,
       "notas": "Ir a 2 casillas adyacentes en 180°",
-      "imagen": "assets/mapa/miau.png"
+      "imagen": "assets/mapa/05-recta.jpg"
     },
     {
       "nombre": "cierre",
       "aristas": 1,
       "anguloEntreAristas": 0,
       "notas": "Solo permite ir a 1 casilla adyacente",
-      "imagen": "assets/mapa/miau.png"
+      "imagen": "assets/mapa/01-tancat.jpg"
     }
   ],
   "especiales": [
@@ -42,21 +42,21 @@
       "aristas": 2,
       "anguloEntreAristas": 90,
       "notas": "Casilla inicial",
-      "imagen": "assets/mapa/miau.png"
+      "imagen": "assets/mapa/06-entrada-laberint.jpg"
     },
     {
       "nombre": "tesoro",
       "aristas": 1,
       "anguloEntreAristas": 0,
       "notas": "Hay un objeto",
-      "imagen": "assets/mapa/miau.png"
+      "imagen": "assets/mapa/08-nitxo.jpg"
     },
     {
       "nombre": "entradaMinotauro",
       "aristas": 3,
       "anguloEntreAristas": 90,
       "notas": "Casilla objetivo",
-      "imagen": "assets/mapa/miau.png"
+      "imagen": "assets/mapa/07-entrada-minotaure.jpg"
     }
   ]
 }

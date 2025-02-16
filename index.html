@@ -1,352 +1,443 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tabla 12x12 con Controles</title>
-  <!-- Iconos FontAwesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-  <style>
-    /* Centrado completo de la página */
-    html, body {
-      height: 100vh;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    /* Contenedor principal: tabla a la izquierda, controles a la derecha */
-    .main-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 50px;
-    }
-    /* Contenedor de la tabla */
-    .grid-container {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    table {
-      border-collapse: collapse;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-    /* Cada celda fija en 40x40 sin redimensionarse */
-    td {
-      border: 1px solid black;
-      width: 40px;
-      height: 40px;
-      box-sizing: border-box;
-      position: relative;
-      overflow: hidden;
-    }
-    /* Numeración de filas y columnas */
-    .num-row, .num-col {
-      position: absolute;
-      font-weight: bold;
-      font-family: monospace;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-sizing: border-box;
-    }
-    .num-row {
-      left: -40px;
-    }
-    .num-col {
-      top: -40px;
-    }
-    /* Panel de controles */
-    .controls-container {
-      width: 250px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .slider-container,
-    .form-container {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .separator {
-      width: 100%;
-      height: 2px;
-      background-color: black;
-      margin: 10px 0;
-    }
-    .slider-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    input[type="number"] {
-      width: 50px;
-      text-align: center;
-    }
-    /* Selector de imagen (modo editor) */
-    .image-upload {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      width: 40px;
-      height: 40px;
-    }
-    .image-upload img {
-      width: 100%;
-      height: 100%;
-      display: none; /* Se mostrará en el panel de controles */
-      object-fit: cover;
-    }
-    .image-upload .icon {
-      box-sizing: border-box;
-      font-size: 14px;
-      border: 1px solid black;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    /* Contenedor para seleccionar el color del círculo */
-    .color-container {
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .button-row {
-      display: flex;
-      justify-content: center;
-      margin-top: 20px;
-      gap: 10px;
-    }
-    /* Botón Reset oculto en modo editor */
-    #resetButton {
-      display: none;
-    }
-    /* Los radio buttons se muestran solo en modo juego */
-    .image-radio {
-      display: none;
-    }
-  </style>
-</head>
-<body>
-  <!-- Contenedor principal: tabla y panel de controles -->
-  <div class="main-container">
-    <!-- Tabla 12x12 con numeración -->
-    <div class="grid-container">
-      <table id="grid">
-        <tbody>
-          <script>
-            // Numeración de filas
-            for (let i = 1; i <= 12; i++) {
-              document.write(`<div class="num-row" style="top: ${(i - 1) * 40}px;">${i}</div>`);
-            }
-            // Numeración de columnas
-            for (let i = 1; i <= 12; i++) {
-              document.write(`<div class="num-col" style="left: ${(i - 1) * 40}px;">${i}</div>`);
-            }
-            // Crear filas y columnas de la tabla
-            for (let i = 1; i <= 12; i++) {
-              document.write("<tr>");
-              for (let j = 1; j <= 12; j++) {
-                document.write("<td></td>");
-              }
-              document.write("</tr>");
-            }
-          </script>
-        </tbody>
-      </table>
-    </div>
-    <!-- Panel de controles -->
-    <div class="controls-container">
-      <div class="slider-container">
-        <label for="range">Dificultad:</label>
-        <div class="slider-group">
-          <input type="range" id="range" min="0" max="10" value="5" oninput="document.getElementById('rangeValue').value = this.value" />
-          <input type="number" id="rangeValue" min="0" max="10" value="5" oninput="document.getElementById('range').value = this.value" />
-        </div>
-      </div>
-      <div class="separator"></div>
-      <div class="form-container">
-        <form id="imagesForm">
-          <script>
-            // Se generan 8 controles para imágenes
-            for (let i = 0; i < 8; i++) {
-              document.write(`
-                <div class="slider-group">
-                  <input type="range" min="0" max="100" value="50" oninput="this.nextElementSibling.value = this.value">
-                  <input type="number" min="0" max="100" value="50" oninput="this.previousElementSibling.value = this.value">
-                  <label class="image-upload" data-index="${i}">
-                    <input type="file" accept="image/*" onchange="previewImage(event, this.parentElement.querySelector('img'), this.parentElement.querySelector('i'), ${i})" style="display:none;">
-                    <i class="fa fa-image icon"></i>
-                    <img src="" alt="Imagen ${i+1}">
-                  </label>
-                  <!-- Radio button para modo juego -->
-                  <input type="radio" class="image-radio" name="imgOption" value="${i}">
-                </div>
-                <br>
-              `);
-            }
-          </script>
-        </form>
-      </div>
-      <!-- Nuevo control para seleccionar el color del círculo -->
-      <div class="color-container">
-        <label for="circleColor">Color de círculo:</label>
-        <input type="color" id="circleColor" value="#ff0000">
-      </div>
-      <div class="button-row">
-        <button id="confirmButton" onclick="confirmConfig()">Confirmar</button>
-        <button id="resetButton" onclick="resetToEditor()">Resetear</button>
-      </div>
-    </div>
-  </div>
-  <script>
-    // Array para guardar las imágenes cargadas (5 imágenes)
-    let uploadedImages = [null, null, null, null, null];
-    // Índice de la imagen seleccionada en modo juego
-    let selectedImageIndex = 0;
-    // Flag para saber en qué modo estamos (editor o juego)
-    let isGameMode = false;
-
-    // Previsualizar imagen en el panel de controles (modo editor)
-    function previewImage(event, imgElement, iconElement, index) {
-      let reader = new FileReader();
-      reader.onload = function() {
-        imgElement.src = reader.result;
-        imgElement.style.display = "block";
-        iconElement.style.display = "none";
-        uploadedImages[index] = reader.result;
-      };
-      reader.readAsDataURL(event.target.files[0]);
-    }
-
-    // Al confirmar, se pasan los controles a modo juego (sin imprimir configuración)
-    function confirmConfig() {
-      // Deshabilitar inputs en el panel de controles (menos el selector de color)
-      document.querySelectorAll(".form-container input[type='range']").forEach(r => r.disabled = true);
-      document.querySelectorAll(".form-container input[type='number']").forEach(n => n.disabled = true);
-      document.querySelectorAll(".image-upload input[type='file']").forEach(f => f.disabled = true);
-      document.getElementById("range").disabled = true;
-      document.getElementById("rangeValue").disabled = true;
-
-      // Mostrar los radio buttons para seleccionar la imagen
-      document.querySelectorAll(".image-radio").forEach(radio => {
-        radio.style.display = "inline";
-        radio.disabled = false;
-      });
-      // Cambiar botones: ocultar Confirmar y mostrar Resetear
-      document.getElementById("confirmButton").style.display = "none";
-      document.getElementById("resetButton").style.display = "inline";
-
-      // Activar modo juego
-      activateGameMode();
-      isGameMode = true;
-    }
-
-    // Activa los eventos en la tabla para modo juego
-    function activateGameMode() {
-      // Selección de imagen vía radio buttons
-      let radios = document.querySelectorAll(".image-radio");
-      radios.forEach(radio => {
-        radio.addEventListener("change", function() {
-          selectedImageIndex = parseInt(this.value);
-        });
-      });
-      radios[0].checked = true;
-      selectedImageIndex = 0;
-
-      // Agregar eventos a cada celda de la tabla:
-      // Click izquierdo: insertar imagen o, si se pulsa Shift, pintar un círculo
-      // Click derecho: borrar el contenido de la celda
-      document.querySelectorAll("#grid td").forEach(cell => {
-        cell.addEventListener("click", leftClickHandler);
-        cell.addEventListener("contextmenu", rightClickHandler);
-      });
-    }
-
-    // Al hacer click izquierdo en una celda:
-    // - Si se pulsa Shift, se dibuja un círculo con el color seleccionado.
-    // - Si no, se inserta o rota la imagen seleccionada.
-    function leftClickHandler(e) {
-      if (!isGameMode) return;
-
-      // Si se pulsa Shift, pintar un círculo
-      if (e.shiftKey) {
-        this.innerHTML = "";
-        let circle = document.createElement("div");
-        circle.style.width = "100%";
-        circle.style.height = "100%";
-        circle.style.borderRadius = "50%";
-        circle.style.background = document.getElementById("circleColor").value;
-        this.appendChild(circle);
-        return;
-      }
-      
-      // Si no se pulsa Shift, se maneja la imagen
-      if (!uploadedImages[selectedImageIndex]) return;
-      let selectedImage = uploadedImages[selectedImageIndex];
-      let img = this.querySelector("img");
-      if (img) {
-        if (img.src === selectedImage) {
-          // Rotar 90° adicionales si la imagen es la misma
-          let currentRotation = parseInt(img.dataset.rotation) || 0;
-          currentRotation = (currentRotation + 90) % 360;
-          img.style.transform = `rotate(${currentRotation}deg)`;
-          img.dataset.rotation = currentRotation;
-        } else {
-          // Reemplazar imagen y resetear rotación
-          img.src = selectedImage;
-          img.style.transform = "rotate(0deg)";
-          img.dataset.rotation = 0;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabla 12x12 con Controles (JSON en la misma página)</title>
+    <!-- Iconos FontAwesome (opcional) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Centrado completo de la página */
+        html,
+        body {
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
-      } else {
-        img = document.createElement("img");
-        img.src = selectedImage;
-        img.style.width = "100%";
-        img.style.height = "100%";
-        img.style.objectFit = "cover";
-        img.style.transform = "rotate(0deg)";
-        img.dataset.rotation = 0;
-        this.appendChild(img);
-      }
-    }
 
-    // Al hacer click derecho se elimina el contenido de la celda (imagen o círculo)
-    function rightClickHandler(e) {
-      if (!isGameMode) return;
-      e.preventDefault();
-      this.innerHTML = "";
-    }
+        .main-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 50px;
+        }
 
-    // Reset: vuelve al modo editor y limpia las celdas
-    function resetToEditor() {
-      document.querySelectorAll(".form-container input[type='range']").forEach(r => r.disabled = false);
-      document.querySelectorAll(".form-container input[type='number']").forEach(n => n.disabled = false);
-      document.querySelectorAll(".image-upload input[type='file']").forEach(f => f.disabled = false);
-      document.getElementById("range").disabled = false;
-      document.getElementById("rangeValue").disabled = false;
-      document.querySelectorAll(".image-radio").forEach(radio => {
-        radio.disabled = true;
-        radio.style.display = "none";
-      });
-      document.getElementById("confirmButton").style.display = "inline";
-      document.getElementById("resetButton").style.display = "none";
-      document.querySelectorAll("#grid td").forEach(cell => {
-        cell.innerHTML = "";
-      });
-      isGameMode = false;
-    }
-  </script>
+        .grid-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        /* Cada celda fija en 40x40 sin redimensionarse */
+        td {
+            border: 1px solid black;
+            width: 40px;
+            height: 40px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Numeración de filas y columnas */
+        .num-row,
+        .num-col {
+            position: absolute;
+            font-weight: bold;
+            font-family: monospace;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .num-row {
+            left: -40px;
+        }
+
+        .num-col {
+            top: -40px;
+        }
+
+        .controls-container {
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slider-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .separator {
+            width: 100%;
+            height: 2px;
+            background-color: black;
+            margin: 10px 0;
+        }
+
+        /* Contenedor para los 8 controles de casilla */
+        #tilesContainer {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .tile-control {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 5px;
+        }
+
+        .tile-control img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border: 1px solid #ccc;
+        }
+
+        .tile-control .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tile-control .slider-group input[type="number"] {
+            width: 45px;
+            text-align: center;
+        }
+
+        .tile-name {
+            font-weight: bold;
+            margin: 0 5px;
+        }
+
+        .color-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        #resetButton {
+            display: none;
+        }
+
+        .image-radio {
+            margin-left: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <!-- Tabla 12x12 con numeración -->
+        <div class="grid-container">
+            <table id="grid">
+                <tbody>
+                    <script>
+                        // Numeración de filas
+                        for (let i = 1; i <= 12; i++) {
+                            document.write(`<div class="num-row" style="top: ${(i - 1) * 40}px;">${i}</div>`);
+                        }
+                        // Numeración de columnas
+                        for (let i = 1; i <= 12; i++) {
+                            document.write(`<div class="num-col" style="left: ${(i - 1) * 40}px;">${i}</div>`);
+                        }
+                        // Crear las filas y columnas de la tabla
+                        for (let i = 1; i <= 12; i++) {
+                            document.write("<tr>");
+                            for (let j = 1; j <= 12; j++) {
+                                document.write("<td></td>");
+                            }
+                            document.write("</tr>");
+                        }
+                    </script>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Panel de controles -->
+        <div class="controls-container">
+            <!-- Control de dificultad -->
+            <div class="slider-container">
+                <label for="range">Dificultad:</label>
+                <div class="slider-group">
+                    <input type="range" id="range" min="0" max="10" value="5"
+                        oninput="document.getElementById('rangeValue').value = this.value">
+                    <input type="number" id="rangeValue" min="0" max="10" value="5"
+                        oninput="document.getElementById('range').value = this.value">
+                </div>
+            </div>
+            <div class="separator"></div>
+
+            <!-- Aquí se generarán los 8 controles (normales + especiales) -->
+            <div id="tilesContainer"></div>
+
+            <!-- Selector de color para pintar un círculo (Shift+Click) -->
+            <div class="color-container">
+                <label for="circleColor">Color de círculo:</label>
+                <input type="color" id="circleColor" value="#ff0000">
+            </div>
+
+            <!-- Botones Confirmar y Resetear -->
+            <div class="button-row">
+                <button id="confirmButton" onclick="confirmConfig()">Confirmar</button>
+                <button id="resetButton" onclick="resetToEditor()">Resetear</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /*
+          Definimos el "JSON" como una constante en el mismo archivo.
+          Tiene dos arrays: "normales" y "especiales".
+        */
+        const CASILLAS = {
+            "normales": [
+                {
+                    "nombre": "cruce",
+                    "aristas": 4,
+                    "anguloEntreAristas": 90,
+                    "notas": "Ir a cualquiera de las 4 casillas adyacentes en 90°",
+                    "imagen": "assets/mapa/03-crueta4.jpg"
+                },
+                {
+                    "nombre": "curva",
+                    "aristas": 2,
+                    "anguloEntreAristas": 90,
+                    "notas": "Ir a 2 casillas adyacentes en 90°",
+                    "imagen": "assets/mapa/04-curva.jpg"
+                },
+                {
+                    "nombre": "bifurcacion",
+                    "aristas": 3,
+                    "anguloEntreAristas": 90,
+                    "notas": "Ir a 3 casillas adyacentes en 90°",
+                    "imagen": "assets/mapa/02-crueta3.jpg"
+                },
+                {
+                    "nombre": "recta",
+                    "aristas": 2,
+                    "anguloEntreAristas": 180,
+                    "notas": "Ir a 2 casillas adyacentes en 180°",
+                    "imagen": "assets/mapa/05-recta.jpg"
+                },
+                {
+                    "nombre": "cierre",
+                    "aristas": 1,
+                    "anguloEntreAristas": 0,
+                    "notas": "Solo permite ir a 1 casilla adyacente",
+                    "imagen": "assets/mapa/01-tancat.jpg"
+                }
+            ],
+            "especiales": [
+                {
+                    "nombre": "entradaLaberinto",
+                    "aristas": 2,
+                    "anguloEntreAristas": 90,
+                    "notas": "Casilla inicial",
+                    "imagen": "assets/mapa/06-entrada-laberint.jpg"
+                },
+                {
+                    "nombre": "tesoro",
+                    "aristas": 1,
+                    "anguloEntreAristas": 0,
+                    "notas": "Hay un objeto",
+                    "imagen": "assets/mapa/08-nitxo.jpg"
+                },
+                {
+                    "nombre": "entradaMinotauro",
+                    "aristas": 3,
+                    "anguloEntreAristas": 90,
+                    "notas": "Casilla objetivo",
+                    "imagen": "assets/mapa/07-entrada-minotaure.jpg"
+                }
+            ]
+        };
+
+        // Combinamos "normales" y "especiales" para obtener 8 tipos
+        const tileTypes = CASILLAS.normales.concat(CASILLAS.especiales);
+
+        let selectedTileIndex = 0; // índice del tipo seleccionado
+        let isGameMode = false;    // indica si estamos en modo juego
+
+        // Generamos los controles para cada tipo
+        generateTileControls(tileTypes);
+
+        function generateTileControls(types) {
+            const container = document.getElementById("tilesContainer");
+            let html = "";
+
+            types.forEach((tipo, index) => {
+                // Cada tipo de casilla tendrá:
+                // 1) Un slider + number (0..100)
+                // 2) Imagen
+                // 3) Nombre
+                // 4) Radio button
+                html += `
+          <div class="tile-control">
+            <div class="slider-group">
+              <input 
+                type="range" 
+                min="0" 
+                max="100" 
+                value="50" 
+                oninput="this.nextElementSibling.value=this.value"
+              >
+              <input 
+                type="number" 
+                min="0" 
+                max="100" 
+                value="50" 
+                oninput="this.previousElementSibling.value=this.value"
+              >
+            </div>
+            <img 
+              src="${tipo.imagen}" 
+              alt="${tipo.nombre}"
+            >
+            <span class="tile-name">${tipo.nombre}</span>
+            <input 
+              type="radio" 
+              class="image-radio" 
+              name="tileOption" 
+              value="${index}" 
+              ${index === 0 ? "checked" : ""}
+            >
+          </div>
+        `;
+            });
+
+            container.innerHTML = html;
+
+            // Escuchamos el cambio en los radio buttons para cambiar el tipo seleccionado
+            document.querySelectorAll('input[name="tileOption"]').forEach(radio => {
+                radio.addEventListener("change", function () {
+                    selectedTileIndex = parseInt(this.value);
+                });
+            });
+        }
+
+        // Al pulsar "Confirmar" => modo juego
+        function confirmConfig() {
+            // Ejemplo: si quieres deshabilitar los sliders en modo juego, descomenta:
+            // document.querySelectorAll("#tilesContainer input[type='range']").forEach(r => r.disabled = true);
+            // document.querySelectorAll("#tilesContainer input[type='number']").forEach(n => n.disabled = true);
+
+            // No deshabilitamos los radio buttons para poder cambiar la selección
+            // document.querySelectorAll('input[name="tileOption"]').forEach(radio => { radio.disabled = true; });
+
+            // También podrías deshabilitar la dificultad si quieres:
+            // document.getElementById("range").disabled = true;
+            // document.getElementById("rangeValue").disabled = true;
+
+            document.getElementById("confirmButton").style.display = "none";
+            document.getElementById("resetButton").style.display = "inline";
+
+            activateGameMode();
+            isGameMode = true;
+        }
+
+        function activateGameMode() {
+            // Añadimos los eventos a las celdas
+            document.querySelectorAll("#grid td").forEach(cell => {
+                cell.addEventListener("click", leftClickHandler);
+                cell.addEventListener("contextmenu", rightClickHandler);
+            });
+        }
+
+        // Click izquierdo en una celda:
+        // - Shift+Click => pintar un círculo
+        // - Click normal => insertar (o rotar) la imagen del tipo seleccionado
+        function leftClickHandler(e) {
+            if (!isGameMode) return;
+            // Shift => círculo
+            if (e.shiftKey) {
+                this.innerHTML = "";
+                let circle = document.createElement("div");
+                circle.style.width = "100%";
+                circle.style.height = "100%";
+                circle.style.borderRadius = "50%";
+                circle.style.background = document.getElementById("circleColor").value;
+                this.appendChild(circle);
+                return;
+            }
+            // De lo contrario, manejamos la imagen
+            if (!tileTypes[selectedTileIndex]) return;
+            let selectedTile = tileTypes[selectedTileIndex];
+            let img = this.querySelector("img");
+            if (img) {
+                // Si la imagen es la misma, rotar 90°
+                if (img.getAttribute("src") === selectedTile.imagen) {
+                    let currentRotation = parseInt(img.dataset.rotation) || 0;
+                    currentRotation = (currentRotation + 90) % 360;
+                    img.style.transform = `rotate(${currentRotation}deg)`;
+                    img.dataset.rotation = currentRotation;
+                } else {
+                    // Reemplazar imagen
+                    img.setAttribute("src", selectedTile.imagen);
+                    img.style.transform = "rotate(0deg)";
+                    img.dataset.rotation = 0;
+                }
+            } else {
+                // Crear la imagen
+                img = document.createElement("img");
+                img.src = selectedTile.imagen;
+                img.style.width = "100%";
+                img.style.height = "100%";
+                img.style.objectFit = "cover";
+                img.style.transform = "rotate(0deg)";
+                img.dataset.rotation = 0;
+                this.appendChild(img);
+            }
+        }
+
+        // Click derecho => limpiar celda
+        function rightClickHandler(e) {
+            if (!isGameMode) return;
+            e.preventDefault();
+            this.innerHTML = "";
+        }
+
+        // Reset => volver a modo editor y limpiar tabla
+        function resetToEditor() {
+            // Si habías deshabilitado algo en confirmConfig, aquí lo habilitas de nuevo
+            // document.querySelectorAll("#tilesContainer input[type='range']").forEach(r => r.disabled = false);
+            // document.querySelectorAll("#tilesContainer input[type='number']").forEach(n => n.disabled = false);
+            // document.querySelectorAll('input[name="tileOption"]').forEach(radio => { radio.disabled = false; });
+            // document.getElementById("range").disabled = false;
+            // document.getElementById("rangeValue").disabled = false;
+
+            document.getElementById("confirmButton").style.display = "inline";
+            document.getElementById("resetButton").style.display = "none";
+
+            document.querySelectorAll("#grid td").forEach(cell => {
+                cell.innerHTML = "";
+            });
+            isGameMode = false;
+        }
+    </script>
 </body>
+
 </html>
