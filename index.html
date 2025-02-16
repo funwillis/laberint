@@ -1,443 +1,503 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabla 12x12 con Controles (JSON en la misma página)</title>
-    <!-- Iconos FontAwesome (opcional) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* Centrado completo de la página */
-        html,
-        body {
-            height: 100vh;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabla 12x12 con Controles (JSON en la misma página)</title>
+  <!-- Iconos FontAwesome (opcional) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    /* Debug box fijo y centrado en la parte superior */
+    #debugBox {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      border: 2px solid blue;
+      padding: 10px;
+      background: #f0f8ff;
+      text-align: center;
+      display: none; /* se muestra cuando se use el botón aleatorio */
+    }
 
-        .main-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 50px;
-        }
-
-        .grid-container {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        table {
-            border-collapse: collapse;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-        }
-
-        /* Cada celda fija en 40x40 sin redimensionarse */
-        td {
-            border: 1px solid black;
-            width: 40px;
-            height: 40px;
-            box-sizing: border-box;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Numeración de filas y columnas */
-        .num-row,
-        .num-col {
-            position: absolute;
-            font-weight: bold;
-            font-family: monospace;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
-        }
-
-        .num-row {
-            left: -40px;
-        }
-
-        .num-col {
-            top: -40px;
-        }
-
-        .controls-container {
-            width: 300px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .slider-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .separator {
-            width: 100%;
-            height: 2px;
-            background-color: black;
-            margin: 10px 0;
-        }
-
-        /* Contenedor para los 8 controles de casilla */
-        #tilesContainer {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        .tile-control {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            gap: 5px;
-        }
-
-        .tile-control img {
-            width: 40px;
-            height: 40px;
-            object-fit: cover;
-            border: 1px solid #ccc;
-        }
-
-        .tile-control .slider-group {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .tile-control .slider-group input[type="number"] {
-            width: 45px;
-            text-align: center;
-        }
-
-        .tile-name {
-            font-weight: bold;
-            margin: 0 5px;
-        }
-
-        .color-container {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .button-row {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        #resetButton {
-            display: none;
-        }
-
-        .image-radio {
-            margin-left: 5px;
-        }
-    </style>
+    /* Centrado completo de la página */
+    html, body {
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Distribución en 3 columnas: tabla, controles y log */
+    .main-container {
+      display: grid;
+      grid-template-columns: auto auto auto;
+      gap: 50px;
+    }
+    .grid-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    /* Cada celda fija en 40x40 */
+    td {
+      border: 1px solid black;
+      width: 40px;
+      height: 40px;
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Numeración de filas y columnas */
+    .num-row, .num-col {
+      position: absolute;
+      font-weight: bold;
+      font-family: monospace;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    .num-row { left: -40px; }
+    .num-col { top: -40px; }
+    /* Panel de controles */
+    .controls-container {
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .slider-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .separator {
+      width: 100%;
+      height: 2px;
+      background-color: black;
+      margin: 10px 0;
+    }
+    /* Contenedor para los 8 controles */
+    #tilesContainer {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    /* Cada control de baldosa */
+    .tile-control {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 5px;
+      cursor: pointer; /* toda la zona es clicable para seleccionar */
+    }
+    /* Zona de sliders: evita propagación para no cambiar el radio */
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: default;
+    }
+    .slider-group input[type="number"] {
+      width: 45px;
+      text-align: center;
+    }
+    /* Nuevo grupo de slider para mostrar el pool restante (solo para normales) */
+    .remaining-group {
+      display: none; /* se mostrará al iniciar la partida */
+      margin-left: 10px;
+    }
+    .remaining-group input {
+      width: 45px;
+      text-align: center;
+    }
+    .tile-control img {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border: 1px solid #ccc;
+    }
+    .tile-name {
+      font-weight: bold;
+      margin: 0 5px;
+    }
+    .image-radio {
+      margin-left: 5px;
+      cursor: pointer;
+    }
+    .color-container {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .button-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    /* Botones */
+    #resetButton, #randomButton {
+      display: none;
+    }
+    /* Log de cambios: se coloca en la tercera columna con margen superior negativo */
+    .log-container {
+      width: 200px;
+      margin-top: -50px;
+    }
+    .log-container h3 {
+      margin-top: 0;
+      text-align: center;
+    }
+    #logList {
+      list-style: none;
+      padding: 5px;
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      font-family: monospace;
+    }
+    #logList li { margin: 4px 0; }
+  </style>
 </head>
-
 <body>
-    <div class="main-container">
-        <!-- Tabla 12x12 con numeración -->
-        <div class="grid-container">
-            <table id="grid">
-                <tbody>
-                    <script>
-                        // Numeración de filas
-                        for (let i = 1; i <= 12; i++) {
-                            document.write(`<div class="num-row" style="top: ${(i - 1) * 40}px;">${i}</div>`);
-                        }
-                        // Numeración de columnas
-                        for (let i = 1; i <= 12; i++) {
-                            document.write(`<div class="num-col" style="left: ${(i - 1) * 40}px;">${i}</div>`);
-                        }
-                        // Crear las filas y columnas de la tabla
-                        for (let i = 1; i <= 12; i++) {
-                            document.write("<tr>");
-                            for (let j = 1; j <= 12; j++) {
-                                document.write("<td></td>");
-                            }
-                            document.write("</tr>");
-                        }
-                    </script>
-                </tbody>
-            </table>
-        </div>
+  <!-- Debug box -->
+  <div id="debugBox"></div>
 
-        <!-- Panel de controles -->
-        <div class="controls-container">
-            <!-- Control de dificultad -->
-            <div class="slider-container">
-                <label for="range">Dificultad:</label>
-                <div class="slider-group">
-                    <input type="range" id="range" min="0" max="10" value="5"
-                        oninput="document.getElementById('rangeValue').value = this.value">
-                    <input type="number" id="rangeValue" min="0" max="10" value="5"
-                        oninput="document.getElementById('range').value = this.value">
-                </div>
-            </div>
-            <div class="separator"></div>
-
-            <!-- Aquí se generarán los 8 controles (normales + especiales) -->
-            <div id="tilesContainer"></div>
-
-            <!-- Selector de color para pintar un círculo (Shift+Click) -->
-            <div class="color-container">
-                <label for="circleColor">Color de círculo:</label>
-                <input type="color" id="circleColor" value="#ff0000">
-            </div>
-
-            <!-- Botones Confirmar y Resetear -->
-            <div class="button-row">
-                <button id="confirmButton" onclick="confirmConfig()">Confirmar</button>
-                <button id="resetButton" onclick="resetToEditor()">Resetear</button>
-            </div>
-        </div>
+  <div class="main-container">
+    <!-- Columna 1: Tabla -->
+    <div class="grid-container">
+      <table id="grid">
+        <tbody>
+          <script>
+            // Numeración de filas
+            for (let i = 1; i <= 12; i++) {
+              document.write(`<div class="num-row" style="top: ${(i-1)*40}px;">${i}</div>`);
+            }
+            // Numeración de columnas
+            for (let i = 1; i <= 12; i++) {
+              document.write(`<div class="num-col" style="left: ${(i-1)*40}px;">${i}</div>`);
+            }
+            // Crear filas y columnas con data-row y data-col
+            for (let i = 1; i <= 12; i++) {
+              document.write("<tr>");
+              for (let j = 1; j <= 12; j++) {
+                document.write(`<td data-row="${i}" data-col="${j}"></td>`);
+              }
+              document.write("</tr>");
+            }
+          </script>
+        </tbody>
+      </table>
     </div>
 
-    <script>
-        /*
-          Definimos el "JSON" como una constante en el mismo archivo.
-          Tiene dos arrays: "normales" y "especiales".
-        */
-        const CASILLAS = {
-            "normales": [
-                {
-                    "nombre": "cruce",
-                    "aristas": 4,
-                    "anguloEntreAristas": 90,
-                    "notas": "Ir a cualquiera de las 4 casillas adyacentes en 90°",
-                    "imagen": "assets/mapa/03-crueta4.jpg"
-                },
-                {
-                    "nombre": "curva",
-                    "aristas": 2,
-                    "anguloEntreAristas": 90,
-                    "notas": "Ir a 2 casillas adyacentes en 90°",
-                    "imagen": "assets/mapa/04-curva.jpg"
-                },
-                {
-                    "nombre": "bifurcacion",
-                    "aristas": 3,
-                    "anguloEntreAristas": 90,
-                    "notas": "Ir a 3 casillas adyacentes en 90°",
-                    "imagen": "assets/mapa/02-crueta3.jpg"
-                },
-                {
-                    "nombre": "recta",
-                    "aristas": 2,
-                    "anguloEntreAristas": 180,
-                    "notas": "Ir a 2 casillas adyacentes en 180°",
-                    "imagen": "assets/mapa/05-recta.jpg"
-                },
-                {
-                    "nombre": "cierre",
-                    "aristas": 1,
-                    "anguloEntreAristas": 0,
-                    "notas": "Solo permite ir a 1 casilla adyacente",
-                    "imagen": "assets/mapa/01-tancat.jpg"
-                }
-            ],
-            "especiales": [
-                {
-                    "nombre": "entradaLaberinto",
-                    "aristas": 2,
-                    "anguloEntreAristas": 90,
-                    "notas": "Casilla inicial",
-                    "imagen": "assets/mapa/06-entrada-laberint.jpg"
-                },
-                {
-                    "nombre": "tesoro",
-                    "aristas": 1,
-                    "anguloEntreAristas": 0,
-                    "notas": "Hay un objeto",
-                    "imagen": "assets/mapa/08-nitxo.jpg"
-                },
-                {
-                    "nombre": "entradaMinotauro",
-                    "aristas": 3,
-                    "anguloEntreAristas": 90,
-                    "notas": "Casilla objetivo",
-                    "imagen": "assets/mapa/07-entrada-minotaure.jpg"
-                }
-            ]
-        };
+    <!-- Columna 2: Controles -->
+    <div class="controls-container">
+      <!-- Control de dificultad -->
+      <div class="slider-container">
+        <label for="range">Dificultad:</label>
+        <div class="slider-group">
+          <input type="range" id="range" min="0" max="10" value="5" oninput="document.getElementById('rangeValue').value=this.value">
+          <input type="number" id="rangeValue" min="0" max="10" value="5" oninput="document.getElementById('range').value=this.value">
+        </div>
+      </div>
+      <div class="separator"></div>
 
-        // Combinamos "normales" y "especiales" para obtener 8 tipos
-        const tileTypes = CASILLAS.normales.concat(CASILLAS.especiales);
+      <!-- Controles para cada tipo (normales y especiales) -->
+      <div id="tilesContainer"></div>
 
-        let selectedTileIndex = 0; // índice del tipo seleccionado
-        let isGameMode = false;    // indica si estamos en modo juego
+      <!-- Selector de color para pintar un círculo (Shift+Click) -->
+      <div class="color-container">
+        <label for="circleColor">Color de círculo:</label>
+        <input type="color" id="circleColor" value="#ff0000">
+      </div>
 
-        // Generamos los controles para cada tipo
-        generateTileControls(tileTypes);
+      <!-- Botones: Confirmar, Baldosa Aleatoria y Resetear -->
+      <div class="button-row">
+        <button id="confirmButton" onclick="confirmConfig()">Confirmar</button>
+        <button id="randomButton" onclick="randomButtonHandler()">Baldosa Aleatoria</button>
+        <button id="resetButton" onclick="resetToEditor()">Resetear</button>
+      </div>
+    </div>
 
-        function generateTileControls(types) {
-            const container = document.getElementById("tilesContainer");
-            let html = "";
+    <!-- Columna 3: Log de cambios -->
+    <div class="log-container">
+      <h3>Log de cambios</h3>
+      <ul id="logList"></ul>
+    </div>
+  </div>
 
-            types.forEach((tipo, index) => {
-                // Cada tipo de casilla tendrá:
-                // 1) Un slider + number (0..100)
-                // 2) Imagen
-                // 3) Nombre
-                // 4) Radio button
-                html += `
-          <div class="tile-control">
-            <div class="slider-group">
-              <input 
-                type="range" 
-                min="0" 
-                max="100" 
-                value="50" 
-                oninput="this.nextElementSibling.value=this.value"
-              >
-              <input 
-                type="number" 
-                min="0" 
-                max="100" 
-                value="50" 
-                oninput="this.previousElementSibling.value=this.value"
-              >
+  <script>
+    /* JSON definido como constante en la misma página */
+    const CASILLAS = {
+      "normales": [
+        {
+          "nombre": "cruce",
+          "aristas": 4,
+          "anguloEntreAristas": 90,
+          "notas": "Ir a cualquiera de las 4 casillas adyacentes en 90°",
+          "imagen": "assets/mapa/03-crueta4.jpg"
+        },
+        {
+          "nombre": "curva",
+          "aristas": 2,
+          "anguloEntreAristas": 90,
+          "notas": "Ir a 2 casillas adyacentes en 90°",
+          "imagen": "assets/mapa/04-curva.jpg"
+        },
+        {
+          "nombre": "bifurcacion",
+          "aristas": 3,
+          "anguloEntreAristas": 90,
+          "notas": "Ir a 3 casillas adyacentes en 90°",
+          "imagen": "assets/mapa/02-crueta3.jpg"
+        },
+        {
+          "nombre": "recta",
+          "aristas": 2,
+          "anguloEntreAristas": 180,
+          "notas": "Ir a 2 casillas adyacentes en 180°",
+          "imagen": "assets/mapa/05-recta.jpg"
+        },
+        {
+          "nombre": "cierre",
+          "aristas": 1,
+          "anguloEntreAristas": 0,
+          "notas": "Solo permite ir a 1 casilla adyacente",
+          "imagen": "assets/mapa/01-tancat.jpg"
+        }
+      ],
+      "especiales": [
+        {
+          "nombre": "entradaLaberinto",
+          "aristas": 2,
+          "anguloEntreAristas": 90,
+          "notas": "Casilla inicial",
+          "imagen": "assets/mapa/06-entrada-laberint.jpg"
+        },
+        {
+          "nombre": "tesoro",
+          "aristas": 1,
+          "anguloEntreAristas": 0,
+          "notas": "Hay un objeto",
+          "imagen": "assets/mapa/08-nitxo.jpg"
+        },
+        {
+          "nombre": "entradaMinotauro",
+          "aristas": 3,
+          "anguloEntreAristas": 90,
+          "notas": "Casilla objetivo",
+          "imagen": "assets/mapa/07-entrada-minotaure.jpg"
+        }
+      ]
+    };
+
+    // Combinamos normales y especiales para obtener 8 tipos
+    const tileTypes = CASILLAS.normales.concat(CASILLAS.especiales);
+
+    let selectedTileIndex = 0; // Índice del tipo seleccionado
+    let isGameMode = false;    // Modo juego activo o no
+    let poolCounts;            // Pools para los 5 tipos normales
+
+    // Generamos controles para cada tipo
+    generateTileControls(tileTypes);
+    function generateTileControls(types) {
+      const container = document.getElementById("tilesContainer");
+      let html = "";
+      types.forEach((tipo, index) => {
+        // Para los 5 primeros (normales) agregamos un grupo extra de "restante"
+        let remainingHTML = "";
+        if (index < 5) {
+          remainingHTML = `
+            <div class="remaining-group" style="display:none;">
+              <input type="range" class="remaining-slider" min="0" max="100" value="50" disabled>
+              <input type="number" class="remaining-number" min="0" max="100" value="50" disabled>
             </div>
-            <img 
-              src="${tipo.imagen}" 
-              alt="${tipo.nombre}"
-            >
+          `;
+        }
+        html += `
+          <div class="tile-control" onclick="document.getElementById('radio${index}').checked = true; selectedTileIndex=${index};">
+            <div class="slider-group" onclick="event.stopPropagation();">
+              <input type="range" min="0" max="100" value="50" oninput="this.nextElementSibling.value=this.value">
+              <input type="number" min="0" max="100" value="50" oninput="this.previousElementSibling.value=this.value">
+            </div>
+            ${remainingHTML}
+            <img src="${tipo.imagen}" alt="${tipo.nombre}">
             <span class="tile-name">${tipo.nombre}</span>
-            <input 
-              type="radio" 
-              class="image-radio" 
-              name="tileOption" 
-              value="${index}" 
-              ${index === 0 ? "checked" : ""}
-            >
+            <input type="radio" class="image-radio" name="tileOption" id="radio${index}" value="${index}" ${index===0?"checked":""}>
           </div>
         `;
-            });
+      });
+      container.innerHTML = html;
+    }
 
-            container.innerHTML = html;
-
-            // Escuchamos el cambio en los radio buttons para cambiar el tipo seleccionado
-            document.querySelectorAll('input[name="tileOption"]').forEach(radio => {
-                radio.addEventListener("change", function () {
-                    selectedTileIndex = parseInt(this.value);
-                });
-            });
+    // Al pulsar "Confirmar" se bloquean los sliders originales y se muestran los "restante"
+    function confirmConfig() {
+      // Bloquear sliders originales
+      document.querySelectorAll("#tilesContainer .slider-group input").forEach(elem => {
+        elem.disabled = true;
+      });
+      // Inicializar poolCounts para los 5 tipos normales y mostrar los sliders restantes
+      poolCounts = [];
+      const tileControls = document.querySelectorAll("#tilesContainer .tile-control");
+      for (let i = 0; i < 5; i++) {
+        const rangeVal = parseInt(tileControls[i].querySelector(".slider-group input[type='range']").value);
+        poolCounts[i] = rangeVal;
+        // Mostrar el grupo restante y establecer su valor
+        const remGroup = tileControls[i].querySelector(".remaining-group");
+        if (remGroup) {
+          remGroup.style.display = "inline-block";
+          remGroup.querySelector(".remaining-slider").value = rangeVal;
+          remGroup.querySelector(".remaining-number").value = rangeVal;
         }
+      }
+      // Mostrar botones "Resetear" y "Baldosa Aleatoria"
+      document.getElementById("confirmButton").style.display = "none";
+      document.getElementById("resetButton").style.display = "inline";
+      document.getElementById("randomButton").style.display = "inline";
+      // Mostrar el debug box (vacío inicialmente)
+      document.getElementById("debugBox").style.display = "block";
+      activateGameMode();
+      isGameMode = true;
+    }
 
-        // Al pulsar "Confirmar" => modo juego
-        function confirmConfig() {
-            // Ejemplo: si quieres deshabilitar los sliders en modo juego, descomenta:
-            // document.querySelectorAll("#tilesContainer input[type='range']").forEach(r => r.disabled = true);
-            // document.querySelectorAll("#tilesContainer input[type='number']").forEach(n => n.disabled = true);
+    // Añade eventos a cada celda de la tabla
+    function activateGameMode() {
+      document.querySelectorAll("#grid td").forEach(cell => {
+        cell.addEventListener("click", leftClickHandler);
+        cell.addEventListener("contextmenu", rightClickHandler);
+      });
+    }
 
-            // No deshabilitamos los radio buttons para poder cambiar la selección
-            // document.querySelectorAll('input[name="tileOption"]').forEach(radio => { radio.disabled = true; });
+    // Función para agregar una línea al log (inserciones manuales)
+    function addLog(row, col, tileName) {
+      const li = document.createElement("li");
+      li.textContent = `celda (${row},${col}): ${tileName}`;
+      document.getElementById("logList").appendChild(li);
+    }
+    // Función para loguear la selección aleatoria
+    function addLogRandom(prev, curr, tileName) {
+      const li = document.createElement("li");
+      li.textContent = `${prev} -> ${curr} (${tileName})`;
+      document.getElementById("logList").appendChild(li);
+    }
 
-            // También podrías deshabilitar la dificultad si quieres:
-            // document.getElementById("range").disabled = true;
-            // document.getElementById("rangeValue").disabled = true;
-
-            document.getElementById("confirmButton").style.display = "none";
-            document.getElementById("resetButton").style.display = "inline";
-
-            activateGameMode();
-            isGameMode = true;
+    // Click izquierdo en celda:
+    // - Shift+Click: dibuja un círculo (sin log)
+    // - Click normal: inserta/rota la imagen (si se inserta o reemplaza, se loguea)
+    function leftClickHandler(e) {
+      if (!isGameMode) return;
+      const row = this.dataset.row;
+      const col = this.dataset.col;
+      if (e.shiftKey) {
+        this.innerHTML = "";
+        const circle = document.createElement("div");
+        circle.style.width = "100%";
+        circle.style.height = "100%";
+        circle.style.borderRadius = "50%";
+        circle.style.background = document.getElementById("circleColor").value;
+        this.appendChild(circle);
+        return;
+      }
+      if (!tileTypes[selectedTileIndex]) return;
+      const selectedTile = tileTypes[selectedTileIndex];
+      let img = this.querySelector("img");
+      if (img) {
+        if (img.getAttribute("src") === selectedTile.imagen) {
+          // Rotación: no se loguea
+          let currentRotation = parseInt(img.dataset.rotation) || 0;
+          currentRotation = (currentRotation + 90) % 360;
+          img.style.transform = `rotate(${currentRotation}deg)`;
+          img.dataset.rotation = currentRotation;
+        } else {
+          img.setAttribute("src", selectedTile.imagen);
+          img.style.transform = "rotate(0deg)";
+          img.dataset.rotation = 0;
+          addLog(row, col, selectedTile.nombre);
         }
+      } else {
+        img = document.createElement("img");
+        img.src = selectedTile.imagen;
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "cover";
+        img.style.transform = "rotate(0deg)";
+        img.dataset.rotation = 0;
+        this.appendChild(img);
+        addLog(row, col, selectedTile.nombre);
+      }
+    }
 
-        function activateGameMode() {
-            // Añadimos los eventos a las celdas
-            document.querySelectorAll("#grid td").forEach(cell => {
-                cell.addEventListener("click", leftClickHandler);
-                cell.addEventListener("contextmenu", rightClickHandler);
-            });
-        }
+    // Click derecho en celda: limpia contenido (sin log)
+    function rightClickHandler(e) {
+      if (!isGameMode) return;
+      e.preventDefault();
+      this.innerHTML = "";
+    }
 
-        // Click izquierdo en una celda:
-        // - Shift+Click => pintar un círculo
-        // - Click normal => insertar (o rotar) la imagen del tipo seleccionado
-        function leftClickHandler(e) {
-            if (!isGameMode) return;
-            // Shift => círculo
-            if (e.shiftKey) {
-                this.innerHTML = "";
-                let circle = document.createElement("div");
-                circle.style.width = "100%";
-                circle.style.height = "100%";
-                circle.style.borderRadius = "50%";
-                circle.style.background = document.getElementById("circleColor").value;
-                this.appendChild(circle);
-                return;
-            }
-            // De lo contrario, manejamos la imagen
-            if (!tileTypes[selectedTileIndex]) return;
-            let selectedTile = tileTypes[selectedTileIndex];
-            let img = this.querySelector("img");
-            if (img) {
-                // Si la imagen es la misma, rotar 90°
-                if (img.getAttribute("src") === selectedTile.imagen) {
-                    let currentRotation = parseInt(img.dataset.rotation) || 0;
-                    currentRotation = (currentRotation + 90) % 360;
-                    img.style.transform = `rotate(${currentRotation}deg)`;
-                    img.dataset.rotation = currentRotation;
-                } else {
-                    // Reemplazar imagen
-                    img.setAttribute("src", selectedTile.imagen);
-                    img.style.transform = "rotate(0deg)";
-                    img.dataset.rotation = 0;
-                }
-            } else {
-                // Crear la imagen
-                img = document.createElement("img");
-                img.src = selectedTile.imagen;
-                img.style.width = "100%";
-                img.style.height = "100%";
-                img.style.objectFit = "cover";
-                img.style.transform = "rotate(0deg)";
-                img.dataset.rotation = 0;
-                this.appendChild(img);
-            }
-        }
+    // Botón "Baldosa Aleatoria": elige aleatoriamente uno de los 5 tipos normales (si pool > 0)
+    function randomButtonHandler() {
+      // Recolectamos índices disponibles (pool > 0)
+      const available = [];
+      for (let i = 0; i < 5; i++) {
+        if (poolCounts[i] > 0) available.push(i);
+      }
+      if (available.length === 0) {
+        alert("No hay baldosas disponibles en el pool.");
+        return;
+      }
+      const randIndex = available[Math.floor(Math.random() * available.length)];
+      const prevCount = poolCounts[randIndex];
+      poolCounts[randIndex]--; // decrementamos el pool
 
-        // Click derecho => limpiar celda
-        function rightClickHandler(e) {
-            if (!isGameMode) return;
-            e.preventDefault();
-            this.innerHTML = "";
-        }
+      // Actualizamos la visualización del pool restante en el control correspondiente
+      const tileControl = document.querySelectorAll("#tilesContainer .tile-control")[randIndex];
+      const remSlider = tileControl.querySelector(".remaining-slider");
+      const remNumber = tileControl.querySelector(".remaining-number");
+      remSlider.value = poolCounts[randIndex];
+      remNumber.value = poolCounts[randIndex];
 
-        // Reset => volver a modo editor y limpiar tabla
-        function resetToEditor() {
-            // Si habías deshabilitado algo en confirmConfig, aquí lo habilitas de nuevo
-            // document.querySelectorAll("#tilesContainer input[type='range']").forEach(r => r.disabled = false);
-            // document.querySelectorAll("#tilesContainer input[type='number']").forEach(n => n.disabled = false);
-            // document.querySelectorAll('input[name="tileOption"]').forEach(radio => { radio.disabled = false; });
-            // document.getElementById("range").disabled = false;
-            // document.getElementById("rangeValue").disabled = false;
+      // Actualizamos la selección: activamos el radio button correspondiente
+      selectedTileIndex = randIndex;
+      document.getElementById("radio" + randIndex).checked = true;
 
-            document.getElementById("confirmButton").style.display = "inline";
-            document.getElementById("resetButton").style.display = "none";
+      // Mostrar el debug box en la parte superior (ya está fijo y centrado)
+      const debugBox = document.getElementById("debugBox");
+      debugBox.innerHTML = `<h4>Celda aleatoria</h4>
+                            <p>${tileTypes[randIndex].nombre}</p>
+                            <img src="${tileTypes[randIndex].imagen}" alt="${tileTypes[randIndex].nombre}" style="width:40px; height:40px; object-fit:cover;">`;
+      // Se mantiene visible por un rato (opcional)
+      setTimeout(() => { debugBox.innerHTML = ""; }, 3000);
 
-            document.querySelectorAll("#grid td").forEach(cell => {
-                cell.innerHTML = "";
-            });
-            isGameMode = false;
-        }
-    </script>
+      // Agregar log: "prev -> curr (nombre)"
+      addLogRandom(prevCount, poolCounts[randIndex], tileTypes[randIndex].nombre);
+    }
+
+    // Resetear: volver a modo editor, limpiar tabla, log y debug, y reactivar controles
+    function resetToEditor() {
+      // Reactivar los sliders originales
+      document.querySelectorAll("#tilesContainer .slider-group input").forEach(elem => {
+        elem.disabled = false;
+      });
+      document.getElementById("confirmButton").style.display = "inline";
+      document.getElementById("resetButton").style.display = "none";
+      document.getElementById("randomButton").style.display = "none";
+      document.querySelectorAll("#grid td").forEach(cell => {
+        cell.innerHTML = "";
+      });
+      document.getElementById("logList").innerHTML = "";
+      document.getElementById("debugBox").innerHTML = "";
+      isGameMode = false;
+    }
+  </script>
 </body>
-
 </html>
