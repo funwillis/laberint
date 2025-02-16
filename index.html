@@ -36,7 +36,7 @@
       padding: 0;
       text-align: center;
     }
-    /* Cada celda fija en 40x40 y sin redimensionarse */
+    /* Cada celda fija en 40x40 sin redimensionarse */
     td {
       border: 1px solid black;
       width: 40px;
@@ -118,6 +118,11 @@
       justify-content: center;
       align-items: center;
     }
+    /* Contenedor para seleccionar el color del círculo */
+    .color-container {
+      margin-bottom: 20px;
+      text-align: center;
+    }
     .button-row {
       display: flex;
       justify-content: center;
@@ -175,7 +180,8 @@
       <div class="form-container">
         <form id="imagesForm">
           <script>
-            for (let i = 0; i < 4; i++) {
+            // Se generan 8 controles para imágenes
+            for (let i = 0; i < 8; i++) {
               document.write(`
                 <div class="slider-group">
                   <input type="range" min="0" max="100" value="50" oninput="this.nextElementSibling.value = this.value">
@@ -194,6 +200,11 @@
           </script>
         </form>
       </div>
+      <!-- Nuevo control para seleccionar el color del círculo -->
+      <div class="color-container">
+        <label for="circleColor">Color de círculo:</label>
+        <input type="color" id="circleColor" value="#ff0000">
+      </div>
       <div class="button-row">
         <button id="confirmButton" onclick="confirmConfig()">Confirmar</button>
         <button id="resetButton" onclick="resetToEditor()">Resetear</button>
@@ -201,8 +212,8 @@
     </div>
   </div>
   <script>
-    // Array para guardar las imágenes cargadas
-    let uploadedImages = [null, null, null, null];
+    // Array para guardar las imágenes cargadas (5 imágenes)
+    let uploadedImages = [null, null, null, null, null];
     // Índice de la imagen seleccionada en modo juego
     let selectedImageIndex = 0;
     // Flag para saber en qué modo estamos (editor o juego)
@@ -220,9 +231,9 @@
       reader.readAsDataURL(event.target.files[0]);
     }
 
-    // Al confirmar, se pasan los controles a modo juego (sin imprimir la configuración)
+    // Al confirmar, se pasan los controles a modo juego (sin imprimir configuración)
     function confirmConfig() {
-      // Deshabilitar inputs en el panel de controles
+      // Deshabilitar inputs en el panel de controles (menos el selector de color)
       document.querySelectorAll(".form-container input[type='range']").forEach(r => r.disabled = true);
       document.querySelectorAll(".form-container input[type='number']").forEach(n => n.disabled = true);
       document.querySelectorAll(".image-upload input[type='file']").forEach(f => f.disabled = true);
@@ -256,30 +267,69 @@
       selectedImageIndex = 0;
 
       // Agregar eventos a cada celda de la tabla:
-      // Click izquierdo: asignar la imagen seleccionada como background
-      // Click derecho: borrar el background
+      // Click izquierdo: insertar imagen o, si se pulsa Shift, pintar un círculo
+      // Click derecho: borrar el contenido de la celda
       document.querySelectorAll("#grid td").forEach(cell => {
         cell.addEventListener("click", leftClickHandler);
         cell.addEventListener("contextmenu", rightClickHandler);
       });
     }
 
-    // Al hacer click izquierdo en una celda, se asigna el background
+    // Al hacer click izquierdo en una celda:
+    // - Si se pulsa Shift, se dibuja un círculo con el color seleccionado.
+    // - Si no, se inserta o rota la imagen seleccionada.
     function leftClickHandler(e) {
-      if (isGameMode && uploadedImages[selectedImageIndex]) {
-        this.style.background = `url(${uploadedImages[selectedImageIndex]}) center/cover no-repeat`;
+      if (!isGameMode) return;
+
+      // Si se pulsa Shift, pintar un círculo
+      if (e.shiftKey) {
+        this.innerHTML = "";
+        let circle = document.createElement("div");
+        circle.style.width = "100%";
+        circle.style.height = "100%";
+        circle.style.borderRadius = "50%";
+        circle.style.background = document.getElementById("circleColor").value;
+        this.appendChild(circle);
+        return;
+      }
+      
+      // Si no se pulsa Shift, se maneja la imagen
+      if (!uploadedImages[selectedImageIndex]) return;
+      let selectedImage = uploadedImages[selectedImageIndex];
+      let img = this.querySelector("img");
+      if (img) {
+        if (img.src === selectedImage) {
+          // Rotar 90° adicionales si la imagen es la misma
+          let currentRotation = parseInt(img.dataset.rotation) || 0;
+          currentRotation = (currentRotation + 90) % 360;
+          img.style.transform = `rotate(${currentRotation}deg)`;
+          img.dataset.rotation = currentRotation;
+        } else {
+          // Reemplazar imagen y resetear rotación
+          img.src = selectedImage;
+          img.style.transform = "rotate(0deg)";
+          img.dataset.rotation = 0;
+        }
+      } else {
+        img = document.createElement("img");
+        img.src = selectedImage;
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "cover";
+        img.style.transform = "rotate(0deg)";
+        img.dataset.rotation = 0;
+        this.appendChild(img);
       }
     }
 
-    // Al hacer click derecho en una celda, se limpia el background
+    // Al hacer click derecho se elimina el contenido de la celda (imagen o círculo)
     function rightClickHandler(e) {
-      if (isGameMode) {
-        e.preventDefault(); // Evita el menú contextual
-        this.style.background = "";
-      }
+      if (!isGameMode) return;
+      e.preventDefault();
+      this.innerHTML = "";
     }
 
-    // Reset: vuelve al modo editor y limpia los backgrounds de la tabla
+    // Reset: vuelve al modo editor y limpia las celdas
     function resetToEditor() {
       document.querySelectorAll(".form-container input[type='range']").forEach(r => r.disabled = false);
       document.querySelectorAll(".form-container input[type='number']").forEach(n => n.disabled = false);
@@ -293,7 +343,7 @@
       document.getElementById("confirmButton").style.display = "inline";
       document.getElementById("resetButton").style.display = "none";
       document.querySelectorAll("#grid td").forEach(cell => {
-        cell.style.background = "";
+        cell.innerHTML = "";
       });
       isGameMode = false;
     }
