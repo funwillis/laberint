@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saboteur Path Finder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        /* Grid container with 12x12 cells */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: repeat(12, 1fr);
+            width: 480px;
+            height: 480px;
+            gap: 2px;
+            justify-content: center;
+            margin: auto;
+        }
+
+        /* Default cell style */
+        .cell {
+            aspect-ratio: 1 / 1; /* Ensures square shape */
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #eee;
+        }
+
+        /* Styles for different cell types */
+        .start { background-color: green; color: white; }
+        .goal { background-color: gold; color: black; }
+        .path { background-color: white; }
+        .wall { background-color: darkgray; }
+
+        /* Information display */
+        #info {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Saboteur Path Finder</h2>
+<p>Click on a cell to place/remove a tunnel.</p>
+<div id="grid" class="grid"></div>
+
+<p id="info">Path Status: <span id="path-status">Not Connected</span></p>
+
+<script>
+    const rows = 12, cols = 12;
+    
+    // Initialize the grid as a 2D array with all cells empty (0 = no path, 1 = path)
+    let grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+    // Define the start and goal positions
+    const startPos = { x: 0, y: 0 };
+    const goalPos = { x: 11, y: 11 };
+
+    // Function to create the grid dynamically
+    function createGrid() {
+        const gridContainer = document.getElementById('grid');
+        gridContainer.innerHTML = "";
+        
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                let cell = document.createElement("div");
+                cell.classList.add("cell");
+                cell.dataset.x = x;
+                cell.dataset.y = y;
+
+                // Mark the start position
+                if (x === startPos.x && y === startPos.y) {
+                    cell.classList.add("start");
+                    cell.textContent = "S";
+                } 
+                // Mark the goal position
+                else if (x === goalPos.x && y === goalPos.y) {
+                    cell.classList.add("goal");
+                    cell.textContent = "G";
+                } 
+                // Add click event to toggle paths
+                else {
+                    cell.addEventListener("click", () => togglePath(x, y, cell));
+                }
+
+                gridContainer.appendChild(cell);
+            }
+        }
+    }
+
+    // Function to toggle paths on click
+    function togglePath(x, y, cell) {
+        if (grid[y][x] === 0) {
+            grid[y][x] = 1;
+            cell.classList.add("path");
+        } else {
+            grid[y][x] = 0;
+            cell.classList.remove("path");
+        }
+        checkConnectivity();
+    }
+
+    // BFS algorithm to check if a path exists between start and goal
+    function bfs(start, goal) {
+        let queue = [start];
+        let visited = Array.from({ length: rows }, () => Array(cols).fill(false));
+        visited[start.y][start.x] = true;
+
+        // Possible movement directions (up, down, left, right)
+        const directions = [
+            { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
+            { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
+        ];
+
+        while (queue.length > 0) {
+            let { x, y } = queue.shift();
+
+            // If we reach the goal, return true
+            if (x === goal.x && y === goal.y) return true;
+
+            // Explore all possible moves
+            for (let { dx, dy } of directions) {
+                let nx = x + dx, ny = y + dy;
+                if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && grid[ny][nx] === 1 && !visited[ny][nx]) {
+                    visited[ny][nx] = true;
+                    queue.push({ x: nx, y: ny });
+                }
+            }
+        }
+        return false;
+    }
+
+    // Function to check connectivity between start and goal
+    function checkConnectivity() {
+        let connected = bfs(startPos, goalPos);
+        document.getElementById("path-status").textContent = connected ? "Connected!" : "Not Connected";
+        document.getElementById("path-status").style.color = connected ? "green" : "red";
+    }
+
+    // Generate the grid when the page loads
+    createGrid();
+</script>
+
+</body>
+</html>
