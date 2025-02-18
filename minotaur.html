@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Labyrinth - Tile Game</title>
+  <!-- Using the Cinzel font for a classical Greek feel -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap" rel="stylesheet">
+  <style>
+    /* =================== General Styles =================== */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Cinzel', serif;
+      background: linear-gradient(135deg, #fdfcfb, #e2d1c3); /* marble-like background */
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      color: #3e2723;
+    }
+    /* =================== Layout =================== */
+    #game-container {
+      display: flex;
+      width: 100%;
+    }
+    #board-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(12, 50px);
+      grid-template-rows: repeat(12, 50px);
+      gap: 2px;
+      background: #333;
+      padding: 10px;
+      border: 4px solid #8d6e63;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    .cell {
+      width: 50px;
+      height: 50px;
+      background: #fff;
+      position: relative;
+      box-shadow: inset 0 0 2px #999;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .cell.highlight {
+      background: #c8e6c9;
+    }
+    .cell-coord {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      font-size: 10px;
+      color: #666;
+      z-index: 10;
+    }
+    /* =================== Tile Element =================== */
+    /* All tile elements fill their container and remain centered */
+    .tile {
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-repeat: no-repeat;
+      display: block;
+      margin: auto;
+    }
+    /* Deadend tile: occupies less area, with a straight segment and a circle at center */
+    .tile-deadend {
+      width: 80%;
+      height: 80%;
+      margin: auto;
+      background-size: contain;
+    }
+    /* ------------------- Normal Tiles (5 Pieces) ------------------- */
+    /* Cross (all four directions) */
+    .tile-cross {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='100' fill='%235d4037'/><rect x='0' y='40' width='100' height='20' fill='%235d4037'/></svg>");
+    }
+    /* Straight (vertical by default) */
+    .tile-straight {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='100' fill='%235d4037'/></svg>");
+    }
+    /* T-shaped (bifurcation) */
+    .tile-t {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='60' fill='%235d4037'/><rect x='0' y='40' width='100' height='20' fill='%235d4037'/></svg>");
+    }
+    /* Curve: now a quarter-circle arc connecting the top and right edges (base orientation) */
+    .tile-curve {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50,0 A50,50 0 0,1 100,50' stroke='%235d4037' stroke-width='15' fill='none' stroke-linecap='round'/></svg>");
+    }
+    /* Deadend (as defined above) */
+    /* ------------------- Special Tiles ------------------- */
+    .tile-entrance {
+      background-color: #a5d6a7;
+      border: 2px solid #388e3c;
+      border-radius: 4px;
+    }
+    .tile-exit {
+      background-color: #ef9a9a;
+      border: 2px solid #d32f2f;
+      border-radius: 4px;
+    }
+    .tile-treasure {
+      background-color: #ffe082;
+      border: 2px solid #fbc02d;
+      border-radius: 4px;
+    }
+    .tile-minotaur {
+      background-color: #ce93d8;
+      border: 2px solid #8e24aa;
+      border-radius: 4px;
+    }
+    /* =================== Player Marker =================== */
+    .player {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 2px solid #fff;
+      box-shadow: 0 0 3px rgba(0,0,0,0.7);
+      z-index: 15;
+    }
+    .player.player1 { background: #2196F3; }
+    .player.player2 { background: #4CAF50; }
+    .player.player3 { background: #FF9800; }
+    /* =================== Control Panel =================== */
+    #control-panel {
+      width: 300px;
+      padding: 15px;
+      background: #f8f1e4;
+      border-left: 4px solid #8d6e63;
+      box-shadow: -4px 0 10px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* Header text in Catalan */
+    #control-panel h2, #control-panel h3 {
+      color: #5d4037;
+      margin: 5px 0;
+    }
+    #control-panel h2 {
+      font-size: 24px;
+    }
+    .btn {
+      padding: 10px 15px;
+      margin: 10px;
+      background: #8d6e63;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    .btn:hover { background: #6d4c41; }
+    /* Tile preview panel: using flex centering so the tile remains centered when rotated */
+    #tile-controls {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+    #tile-preview-container {
+      width: 60px;
+      height: 60px;
+      margin: 10px;
+      border: 2px dashed #8d6e63;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #fff;
+    }
+    /* The preview tile fills its container */
+    #tile-preview {
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-repeat: no-repeat;
+      display: block;
+    }
+    #message {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+      color: #5d4037;
+      min-height: 40px;
+    }
+    /* =================== Event Log =================== */
+    #event-log-container {
+      width: 100%;
+      margin-top: 10px;
+    }
+    #toggle-log-btn {
+      width: 100%;
+    }
+    #event-log {
+      display: none;
+      max-height: 150px;
+      overflow-y: auto;
+      width: 100%;
+      background: #fff;
+      border: 1px solid #8d6e63;
+      padding: 5px;
+      box-sizing: border-box;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="board-container">
+      <div id="board"></div>
+    </div>
+    <div id="control-panel">
+      <h2>Torn</h2>
+      <div id="turn-info"></div>
+      <div id="tile-controls">
+        <h3>Peça Obtinguda</h3>
+        <div id="tile-preview-container">
+          <div id="tile-preview"></div>
+        </div>
+        <button id="rotate-btn" class="btn">Gira 90º</button>
+        <button id="confirm-tile-btn" class="btn">Confirma peça</button>
+      </div>
+      <div id="message"></div>
+      <div id="event-log-container">
+        <button id="toggle-log-btn" class="btn">Mostra Log</button>
+        <div id="event-log"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // -------------------- Tile Class --------------------
+    class Tile {
+      /**
+       * @param {string} type - Tile type ('cross', 'curve', 't', 'straight', 'deadend' or special)
+       * @param {object} edges - Object with boolean properties: {N, E, S, W}
+       * @param {string|null} special - Special tile type if applicable ('entrance', 'exit', 'treasure', 'minotaur')
+       */
+      constructor(type, edges, special = null) {
+        this.type = type;
+        this.edges = Object.assign({}, edges);
+        this.special = special;
+        this.rotation = 0; // in degrees
+      }
+      // Rotate tile 90º clockwise
+      rotate() {
+        const { N, E, S, W } = this.edges;
+        this.edges = { N: W, E: N, S: E, W: S };
+        this.rotation = (this.rotation + 90) % 360;
+      }
+      clone() {
+        const newTile = new Tile(this.type, Object.assign({}, this.edges), this.special);
+        newTile.rotation = this.rotation;
+        return newTile;
+      }
+    }
+    
+    // -------------------- Cell Class --------------------
+    class Cell {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.tile = null;
+        this.player = null;
+      }
+    }
+    
+    // -------------------- Player Class --------------------
+    class Player {
+      constructor(name, x, y, cssClass) {
+        this.name = name;
+        this.x = x;
+        this.y = y;
+        this.cssClass = cssClass;
+      }
+    }
+    
+    // -------------------- Main Game Class --------------------
+    class Game {
+      constructor() {
+        this.size = 12;
+        this.board = [];
+        this.players = [];
+        this.currentPlayerIndex = 0;
+        this.phase = "idle"; // phases: "idle", "rotate", "place", "move"
+        this.validCells = [];
+        this.activeTile = null;
+        this.events = [];  // event log
+        this.initBoard();
+        this.initSpecialTiles();
+        this.initPlayers();
+        this.renderBoard();
+        this.updateTurnInfo();
+        this.logEvent("Inici del joc");
+        // Automatically start the first turn
+        this.startTurn();
+      }
+      
+      // Initialize board array
+      initBoard() {
+        for (let y = 1; y <= this.size; y++) {
+          const row = [];
+          for (let x = 1; x <= this.size; x++) {
+            row.push(new Cell(x, y));
+          }
+          this.board.push(row);
+        }
+      }
+      
+      // Place fixed special tiles on the board
+      initSpecialTiles() {
+        const placeSpecial = (x, y, specialType, baseType, edges) => {
+          const cell = this.getCell(x, y);
+          cell.tile = new Tile(baseType, edges, specialType);
+        };
+        // Entrances: (1,12), (12,1), (12,12)
+        placeSpecial(1, 12, 'entrance', 'entrance', {N: true, E: true, S: false, W: false});
+        placeSpecial(12, 1, 'entrance', 'entrance', {N: false, E: false, S: true, W: true});
+        placeSpecial(12, 12, 'entrance', 'entrance', {N: true, E: false, S: false, W: true});
+        // Exit: (1,1)
+        placeSpecial(1, 1, 'exit', 'exit', {N: false, E: true, S: true, W: false});
+        // Treasure: (4,4), (4,9), (9,4), (9,9)
+        [[4,4], [4,9], [9,4], [9,9]].forEach(coord => {
+          placeSpecial(coord[0], coord[1], 'treasure', 'treasure', {N: true, E: false, S: false, W: false});
+        });
+        // Minotaur: (6,6), (6,7), (7,6), (7,7)
+        [[6,6], [6,7], [7,6], [7,7]].forEach(coord => {
+          placeSpecial(coord[0], coord[1], 'minotaur', 'minotaur', {N: true, E: true, S: true, W: false});
+        });
+      }
+      
+      // Place players on starting positions
+      initPlayers() {
+        // Starting positions: (1,12), (12,1), (12,12)
+        this.players.push(new Player("Jugador 1", 1, 12, "player1"));
+        this.players.push(new Player("Jugador 2", 12, 1, "player2"));
+        this.players.push(new Player("Jugador 3", 12, 12, "player3"));
+        this.players.forEach(p => {
+          this.getCell(p.x, p.y).player = p;
+        });
+      }
+      
+      // Return cell at (x, y)
+      getCell(x, y) {
+        if (x < 1 || x > this.size || y < 1 || y > this.size) return null;
+        return this.board[y - 1][x - 1];
+      }
+      
+      // Render the board in the DOM
+      renderBoard() {
+        const boardDiv = document.getElementById("board");
+        boardDiv.innerHTML = "";
+        for (let y = 1; y <= this.size; y++) {
+          for (let x = 1; x <= this.size; x++) {
+            const cell = this.getCell(x, y);
+            const cellDiv = document.createElement("div");
+            cellDiv.classList.add("cell");
+            cellDiv.dataset.x = x;
+            cellDiv.dataset.y = y;
+            
+            // Add coordinate label
+            const coordSpan = document.createElement("span");
+            coordSpan.classList.add("cell-coord");
+            coordSpan.innerText = x + "," + y;
+            cellDiv.appendChild(coordSpan);
+            
+            // If cell has a tile, create a tile element inside the cell
+            if (cell.tile) {
+              const tileDiv = document.createElement("div");
+              tileDiv.classList.add("tile");
+              if (cell.tile.special) {
+                tileDiv.classList.add("tile-" + cell.tile.special);
+              } else {
+                tileDiv.classList.add("tile-" + cell.tile.type);
+              }
+              tileDiv.style.transform = "rotate(" + cell.tile.rotation + "deg)";
+              cellDiv.appendChild(tileDiv);
+            }
+            
+            // Highlight valid cells for current action
+            if (this.validCells.find(c => c.x === x && c.y === y)) {
+              cellDiv.classList.add("highlight");
+            }
+            
+            // If cell has a player, add player marker
+            if (cell.player) {
+              const playerDiv = document.createElement("div");
+              playerDiv.classList.add("player", cell.player.cssClass);
+              cellDiv.appendChild(playerDiv);
+            }
+            
+            cellDiv.addEventListener("click", () => this.handleCellClick(x, y));
+            boardDiv.appendChild(cellDiv);
+          }
+        }
+      }
+      
+      // Update turn information in the control panel to indicate the active player
+      updateTurnInfo() {
+        const infoDiv = document.getElementById("turn-info");
+        const currentPlayer = this.getCurrentPlayer();
+        infoDiv.innerHTML = `<p>Torn actiu: ${currentPlayer.name}</p>`;
+      }
+      
+      setMessage(msg) {
+        document.getElementById("message").innerText = msg;
+      }
+      
+      // Log an event (saving a snapshot of the state) and update the event log display
+      logEvent(message) {
+        const snapshot = this.saveState();
+        this.events.unshift({ message, snapshot });
+        this.updateLog();
+      }
+      
+      updateLog() {
+        const logDiv = document.getElementById("event-log");
+        logDiv.innerHTML = "";
+        this.events.forEach((evt, index) => {
+          const entry = document.createElement("div");
+          entry.style.borderBottom = "1px solid #8d6e63";
+          entry.style.padding = "5px";
+          entry.style.display = "flex";
+          entry.style.justifyContent = "space-between";
+          entry.style.alignItems = "center";
+          const msgSpan = document.createElement("span");
+          msgSpan.innerText = evt.message;
+          const rewindBtn = document.createElement("button");
+          rewindBtn.className = "btn";
+          rewindBtn.style.padding = "2px 5px";
+          rewindBtn.style.fontSize = "12px";
+          rewindBtn.innerText = "Rebobina";
+          rewindBtn.onclick = () => { this.rewindToEvent(index); };
+          entry.appendChild(msgSpan);
+          entry.appendChild(rewindBtn);
+          logDiv.appendChild(entry);
+        });
+      }
+      
+      // Toggle visibility of the event log
+      toggleLog() {
+        const logDiv = document.getElementById("event-log");
+        const toggleBtn = document.getElementById("toggle-log-btn");
+        if(logDiv.style.display === "none" || logDiv.style.display === "") {
+          logDiv.style.display = "block";
+          toggleBtn.innerText = "Amaga Log";
+        } else {
+          logDiv.style.display = "none";
+          toggleBtn.innerText = "Mostra Log";
+        }
+      }
+      
+      // Rewind to a saved state from the event log
+      rewindToEvent(index) {
+        const evt = this.events[index];
+        if(evt) {
+          this.restoreState(evt.snapshot);
+          this.logEvent("Rebobinat a: " + evt.message);
+        }
+      }
+      
+      // Save the current game state (returns a snapshot object)
+      saveState() {
+        return {
+          currentPlayerIndex: this.currentPlayerIndex,
+          phase: this.phase,
+          board: this.board.map(row => row.map(cell => ({
+            x: cell.x,
+            y: cell.y,
+            tile: cell.tile ? {
+              type: cell.tile.type,
+              edges: Object.assign({}, cell.tile.edges),
+              special: cell.tile.special,
+              rotation: cell.tile.rotation
+            } : null,
+            player: cell.player ? {
+              name: cell.player.name,
+              x: cell.player.x,
+              y: cell.player.y,
+              cssClass: cell.player.cssClass
+            } : null
+          }))),
+          players: this.players.map(p => ({
+            name: p.name,
+            x: p.x,
+            y: p.y,
+            cssClass: p.cssClass
+          })),
+          activeTile: this.activeTile ? {
+            type: this.activeTile.type,
+            edges: Object.assign({}, this.activeTile.edges),
+            special: this.activeTile.special,
+            rotation: this.activeTile.rotation
+          } : null
+        };
+      }
+      
+      // Restore game state from a snapshot object
+      restoreState(state) {
+        this.currentPlayerIndex = state.currentPlayerIndex;
+        this.phase = state.phase;
+        this.board = state.board.map(rowData => {
+          return rowData.map(cellData => {
+            const cell = new Cell(cellData.x, cellData.y);
+            if(cellData.tile) {
+              cell.tile = new Tile(cellData.tile.type, cellData.tile.edges, cellData.tile.special);
+              cell.tile.rotation = cellData.tile.rotation;
+            }
+            if(cellData.player) {
+              cell.player = new Player(cellData.player.name, cellData.player.x, cellData.player.y, cellData.player.cssClass);
+            }
+            return cell;
+          });
+        });
+        this.players = state.players.map(pData => new Player(pData.name, pData.x, pData.y, pData.cssClass));
+        if(state.activeTile) {
+          this.activeTile = new Tile(state.activeTile.type, state.activeTile.edges, state.activeTile.special);
+          this.activeTile.rotation = state.activeTile.rotation;
+        } else {
+          this.activeTile = null;
+        }
+        this.renderBoard();
+        this.updateTurnInfo();
+      }
+      
+      // Get the current player
+      getCurrentPlayer() {
+        return this.players[this.currentPlayerIndex];
+      }
+      
+      // Return the cell where the current player is located
+      getCurrentPlayerCell() {
+        const p = this.getCurrentPlayer();
+        return this.getCell(p.x, p.y);
+      }
+      
+      // Return adjacent coordinates (N, E, S, W) from (x, y)
+      getAdjacentCoords(x, y) {
+        return [
+          { x: x, y: y - 1, dir: "N" },
+          { x: x + 1, y: y, dir: "E" },
+          { x: x, y: y + 1, dir: "S" },
+          { x: x - 1, y: y, dir: "W" }
+        ].filter(coord => this.getCell(coord.x, coord.y) !== null);
+      }
+      
+      // Determine the direction from one cell to its adjacent cell
+      getDirection(from, to) {
+        if (to.x === from.x && to.y === from.y - 1) return "N";
+        if (to.x === from.x + 1 && to.y === from.y) return "E";
+        if (to.x === from.x && to.y === from.y + 1) return "S";
+        if (to.x === from.x - 1 && to.y === from.y) return "W";
+        return null;
+      }
+      
+      // Return the opposite direction
+      getOpposite(dir) {
+        const opposites = { N: "S", E: "W", S: "N", W: "E" };
+        return opposites[dir];
+      }
+      
+      // For tile placement, only allow an adjacent cell if the current cell’s tile and the active tile are connected
+      getExplorableCells() {
+        const current = this.getCurrentPlayerCell();
+        const adj = this.getAdjacentCoords(current.x, current.y);
+        return adj.filter(coord => {
+          const cell = this.getCell(coord.x, coord.y);
+          if (!cell || cell.tile) return false;
+          return current.tile.edges[coord.dir] && this.activeTile.edges[this.getOpposite(coord.dir)];
+        });
+      }
+      
+      // Get adjacent movable cells based on connectivity (for movement action)
+      getMovableCells() {
+        const current = this.getCurrentPlayerCell();
+        const currentTile = current.tile;
+        if (!currentTile) return [];
+        const adj = this.getAdjacentCoords(current.x, current.y);
+        return adj.filter(coord => {
+          const cell = this.getCell(coord.x, coord.y);
+          if (!cell || !cell.tile) return false;
+          const dir = this.getDirection(current, coord);
+          return currentTile.edges[dir] && cell.tile.edges[this.getOpposite(dir)];
+        });
+      }
+      
+      // Check if the active tile (in its current rotation) can be placed (i.e. connect to at least one adjacent empty cell)
+      isActiveTilePlaceable() {
+        if (!this.activeTile) return false;
+        return this.getExplorableCells().length > 0;
+      }
+      
+      // Rotate the active tile. After rotating, if no valid placement exists, provide visual feedback and disable confirm.
+      rotateActiveTile() {
+        if (this.activeTile && this.phase === "rotate") {
+          this.activeTile.rotate();
+          this.updateTilePreview();
+          if (!this.isActiveTilePlaceable()) {
+            document.getElementById("confirm-tile-btn").disabled = true;
+            this.setMessage("Rotació no vàlida: la peça no es pot col·locar amb aquesta orientació.");
+            document.getElementById("tile-preview").style.border = "2px solid red";
+          } else {
+            document.getElementById("confirm-tile-btn").disabled = false;
+            this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda. Pots girar-la amb 'Gira 90º' i després confirmar-la amb 'Confirma peça'.");
+            document.getElementById("tile-preview").style.border = "none";
+          }
+        }
+      }
+      
+      // Update the tile preview element with the active tile
+      updateTilePreview() {
+        const preview = document.getElementById("tile-preview");
+        // Clear previous content and reset border style
+        preview.innerHTML = "";
+        preview.style.border = "none";
+        if (this.activeTile) {
+          const tileElem = document.createElement("div");
+          tileElem.classList.add("tile");
+          if (this.activeTile.type === "deadend") {
+            tileElem.classList.add("tile-deadend");
+          } else if (this.activeTile.special) {
+            tileElem.classList.add("tile-" + this.activeTile.special);
+          } else {
+            tileElem.classList.add("tile-" + this.activeTile.type);
+          }
+          tileElem.style.transform = "rotate(" + this.activeTile.rotation + "deg)";
+          preview.appendChild(tileElem);
+        }
+      }
+      
+      // Get a random tile from the pool of normal tiles (with a random initial rotation)
+      getRandomTile() {
+        const tilePool = [
+          { type: "cross", edges: {N: true, E: true, S: true, W: true} },
+          { type: "curve", edges: {N: true, E: true, S: false, W: false} },
+          { type: "t", edges: {N: true, E: true, S: false, W: true} },
+          { type: "straight", edges: {N: true, E: false, S: true, W: false} },
+          { type: "deadend", edges: {N: true, E: false, S: false, W: false} }
+        ];
+        const rand = tilePool[Math.floor(Math.random() * tilePool.length)];
+        let tile = new Tile(rand.type, Object.assign({}, rand.edges));
+        const rotations = Math.floor(Math.random() * 4);
+        for (let i = 0; i < rotations; i++) {
+          tile.rotate();
+        }
+        return tile;
+      }
+      
+      // Start the turn automatically.
+      // If there are no free adjacent cells, only allow movement.
+      startTurn() {
+        const current = this.getCurrentPlayerCell();
+        const freeAdjacent = this.getAdjacentCoords(current.x, current.y).filter(coord => {
+          const cell = this.getCell(coord.x, coord.y);
+          return cell && !cell.tile;
+        });
+        if (freeAdjacent.length === 0) {
+          this.phase = "move";
+          this.validCells = this.getMovableCells();
+          if (this.validCells.length === 0) {
+            this.setMessage("No pots explorar ni moure't. Torn perdut.");
+            this.logEvent("No pots explorar ni moure't");
+            this.endTurn();
+          } else {
+            this.setMessage("No pots explorar. Només pots moure't.");
+            this.logEvent("Torn de " + this.getCurrentPlayer().name + ": només pots moure't");
+          }
+          this.renderBoard();
+          return;
+        }
+        // Otherwise, draw a tile and allow rotation
+        this.phase = "rotate";
+        this.activeTile = this.getRandomTile();
+        this.logEvent("Torn de " + this.getCurrentPlayer().name);
+        this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda. Pots girar-la amb 'Gira 90º' i després confirmar-la amb 'Confirma peça'.");
+        document.getElementById("tile-controls").style.display = "flex";
+        document.getElementById("confirm-tile-btn").disabled = !this.isActiveTilePlaceable();
+        this.updateTilePreview();
+      }
+      
+      // Confirm the active tile orientation and allow placement on the board
+      confirmTile() {
+        if (this.activeTile && this.phase === "rotate") {
+          if (!this.isActiveTilePlaceable()) {
+            this.setMessage("La peça no es pot col·locar en cap casella.");
+            return;
+          }
+          this.phase = "place";
+          this.validCells = this.getExplorableCells();
+          if (this.validCells.length === 0) {
+            this.setMessage("No hi ha caselles vàlides per col·locar la peça. Torn perdut.");
+            this.logEvent("Peça no col·locable");
+            this.endTurn();
+          } else {
+            this.setMessage("Explora: tria una casella adjacent per col·locar la peça.");
+          }
+          document.getElementById("tile-controls").style.display = "none";
+          this.renderBoard();
+          this.logEvent("Peça confirmada");
+        }
+      }
+      
+      // Handle cell click based on the current phase (tile placement or movement)
+      handleCellClick(x, y) {
+        if (this.phase === "place") {
+          if (!this.validCells.find(c => c.x === x && c.y === y)) return;
+          const cell = this.getCell(x, y);
+          cell.tile = this.activeTile;
+          this.activeTile = null;
+          this.validCells = [];
+          this.phase = "move";
+          this.validCells = this.getMovableCells();
+          if (this.validCells.length === 0) {
+            this.setMessage("Peça col·locada. No hi ha moviments disponibles. Fi de torn.");
+            this.renderBoard();
+            this.logEvent("Peça col·locada sense moviments");
+            setTimeout(() => this.endTurn(), 1000);
+          } else {
+            this.setMessage("Peça col·locada. Ara tria on vols moure't.");
+            this.logEvent("Peça col·locada");
+          }
+          this.renderBoard();
+        } else if (this.phase === "move") {
+          if (!this.validCells.find(c => c.x === x && c.y === y)) return;
+          const currentPlayer = this.getCurrentPlayer();
+          this.getCell(currentPlayer.x, currentPlayer.y).player = null;
+          currentPlayer.x = x;
+          currentPlayer.y = y;
+          this.getCell(x, y).player = currentPlayer;
+          this.setMessage("El jugador " + currentPlayer.name + " s'ha mogut a (" + x + "," + y + "). Fi de torn.");
+          this.renderBoard();
+          this.logEvent("Jugador " + currentPlayer.name + " mogut a (" + x + "," + y + ")");
+          setTimeout(() => this.endTurn(), 1000);
+        }
+      }
+      
+      // End the current turn and automatically start the next turn after a short delay.
+      // Rotate players in round-robin fashion.
+      endTurn() {
+        this.logEvent("Fi de torn de " + this.getCurrentPlayer().name);
+        this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+        setTimeout(() => { this.startTurn(); }, 1000);
+      }
+    }
+    
+    // -------------------- Initialize Game --------------------
+    const game = new Game();
+    
+    // Button event listeners
+    document.getElementById("rotate-btn").addEventListener("click", () => {
+      game.rotateActiveTile();
+    });
+    document.getElementById("confirm-tile-btn").addEventListener("click", () => {
+      game.confirmTile();
+    });
+    document.getElementById("toggle-log-btn").addEventListener("click", () => {
+      game.toggleLog();
+    });
+  </script>
+</body>
+</html>
