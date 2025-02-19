@@ -11,22 +11,50 @@
       margin: 0;
       padding: 0;
       font-family: 'Cinzel', serif;
-      background: linear-gradient(135deg, #fdfcfb, #e2d1c3); /* marble-like background */
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
+      background: linear-gradient(135deg, #fdfcfb, #e2d1c3);
       color: #3e2723;
     }
-    /* =================== Layout =================== */
+    /* =================== Layout: 3 Columns =================== */
     #game-container {
       display: flex;
-      width: 100%;
+      height: 100vh;
+      box-sizing: border-box;
+      padding: 5px;
     }
+    /* Left Panel: Controls */
+    #control-panel {
+      width: 300px;
+      padding: 15px;
+      background: #f8f1e4;
+      border-right: 4px solid #8d6e63;
+      box-shadow: 4px 0 10px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #control-panel h2, #control-panel h3 {
+      color: #5d4037;
+      margin: 5px 0;
+    }
+    #control-panel h2 {
+      font-size: 24px;
+    }
+    /* Center Panel: Message and Board */
     #board-container {
       flex: 1;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+    #message {
+      margin-bottom: 15px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+      min-height: 40px;
     }
     #board {
       display: grid;
@@ -59,8 +87,7 @@
       color: #666;
       z-index: 10;
     }
-    /* =================== Tile Element =================== */
-    /* All tile elements fill their container and remain centered */
+    /* =================== Tile Visuals =================== */
     .tile {
       width: 100%;
       height: 100%;
@@ -69,32 +96,26 @@
       display: block;
       margin: auto;
     }
-    /* Deadend tile: occupies less area, with a straight segment and a circle at center */
     .tile-deadend {
       width: 80%;
       height: 80%;
       margin: auto;
       background-size: contain;
     }
-    /* ------------------- Normal Tiles (5 Pieces) ------------------- */
-    /* Cross (all four directions) */
+    /* Normal Tiles using inline SVGs */
     .tile-cross {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='100' fill='%235d4037'/><rect x='0' y='40' width='100' height='20' fill='%235d4037'/></svg>");
     }
-    /* Straight (vertical by default) */
     .tile-straight {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='100' fill='%235d4037'/></svg>");
     }
-    /* T-shaped (bifurcation) */
     .tile-t {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='60' fill='%235d4037'/><rect x='0' y='40' width='100' height='20' fill='%235d4037'/></svg>");
     }
-    /* Curve: now a quarter-circle arc connecting the top and right edges (base orientation) */
     .tile-curve {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50,0 A50,50 0 0,1 100,50' stroke='%235d4037' stroke-width='15' fill='none' stroke-linecap='round'/></svg>");
     }
-    /* Deadend (as defined above) */
-    /* ------------------- Special Tiles ------------------- */
+    /* Special Tiles */
     .tile-entrance {
       background-color: #a5d6a7;
       border: 2px solid #388e3c;
@@ -131,24 +152,45 @@
     .player.player1 { background: #2196F3; }
     .player.player2 { background: #4CAF50; }
     .player.player3 { background: #FF9800; }
-    /* =================== Control Panel =================== */
-    #control-panel {
-      width: 300px;
-      padding: 15px;
-      background: #f8f1e4;
-      border-left: 4px solid #8d6e63;
-      box-shadow: -4px 0 10px rgba(0,0,0,0.3);
+    /* =================== Control Panel (Left) =================== */
+    #tile-controls {
       display: flex;
       flex-direction: column;
       align-items: center;
+      width: 100%;
+      margin-top: 15px;
     }
-    /* Header text in Catalan */
-    #control-panel h2, #control-panel h3 {
-      color: #5d4037;
-      margin: 5px 0;
+    #tile-preview-container {
+      width: 60px;
+      height: 60px;
+      margin: 10px;
+      border: 2px dashed #8d6e63;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #fff;
     }
-    #control-panel h2 {
-      font-size: 24px;
+    #tile-preview {
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-repeat: no-repeat;
+      display: block;
+    }
+    /* =================== Log Panel (Right) =================== */
+    #toggle-log-btn {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    #event-log {
+      width: 100%;
+      max-height: 300px;
+      overflow-y: auto;
+      background: #fff;
+      border: 1px solid #8d6e63;
+      padding: 5px;
+      box-sizing: border-box;
+      display: none;
     }
     .btn {
       padding: 10px 15px;
@@ -162,64 +204,11 @@
       transition: background 0.3s;
     }
     .btn:hover { background: #6d4c41; }
-    /* Tile preview panel: using flex centering so the tile remains centered when rotated */
-    #tile-controls {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-    }
-    #tile-preview-container {
-      width: 60px;
-      height: 60px;
-      margin: 10px;
-      border: 2px dashed #8d6e63;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #fff;
-    }
-    /* The preview tile fills its container */
-    #tile-preview {
-      width: 100%;
-      height: 100%;
-      background-size: cover;
-      background-repeat: no-repeat;
-      display: block;
-    }
-    #message {
-      margin-top: 15px;
-      text-align: center;
-      font-weight: bold;
-      color: #5d4037;
-      min-height: 40px;
-    }
-    /* =================== Event Log =================== */
-    #event-log-container {
-      width: 100%;
-      margin-top: 10px;
-    }
-    #toggle-log-btn {
-      width: 100%;
-    }
-    #event-log {
-      display: none;
-      max-height: 150px;
-      overflow-y: auto;
-      width: 100%;
-      background: #fff;
-      border: 1px solid #8d6e63;
-      padding: 5px;
-      box-sizing: border-box;
-      margin-top: 5px;
-    }
   </style>
 </head>
 <body>
   <div id="game-container">
-    <div id="board-container">
-      <div id="board"></div>
-    </div>
+    <!-- Left Panel: Controls -->
     <div id="control-panel">
       <h2>Torn</h2>
       <div id="turn-info"></div>
@@ -231,11 +220,16 @@
         <button id="rotate-btn" class="btn">Gira 90º</button>
         <button id="confirm-tile-btn" class="btn">Confirma peça</button>
       </div>
+    </div>
+    <!-- Center Panel: Message and Board -->
+    <div id="board-container">
       <div id="message"></div>
-      <div id="event-log-container">
-        <button id="toggle-log-btn" class="btn">Mostra Log</button>
-        <div id="event-log"></div>
-      </div>
+      <div id="board"></div>
+    </div>
+    <!-- Right Panel: Event Log -->
+    <div id="log-panel">
+      <button id="toggle-log-btn" class="btn">Mostra Log</button>
+      <div id="event-log"></div>
     </div>
   </div>
 
@@ -409,8 +403,10 @@
       // Update turn information in the control panel to indicate the active player
       updateTurnInfo() {
         const infoDiv = document.getElementById("turn-info");
-        const currentPlayer = this.getCurrentPlayer();
-        infoDiv.innerHTML = `<p>Torn actiu: ${currentPlayer.name}</p>`;
+        if(infoDiv) {
+          const currentPlayer = this.getCurrentPlayer();
+          infoDiv.innerHTML = `<p>Torn actiu: ${currentPlayer.name}</p>`;
+        }
       }
       
       setMessage(msg) {
@@ -621,7 +617,6 @@
       // Update the tile preview element with the active tile
       updateTilePreview() {
         const preview = document.getElementById("tile-preview");
-        // Clear previous content and reset border style
         preview.innerHTML = "";
         preview.style.border = "none";
         if (this.activeTile) {
@@ -679,7 +674,6 @@
           this.renderBoard();
           return;
         }
-        // Otherwise, draw a tile and allow rotation
         this.phase = "rotate";
         this.activeTile = this.getRandomTile();
         this.logEvent("Torn de " + this.getCurrentPlayer().name);
