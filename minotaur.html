@@ -100,7 +100,7 @@
       margin: auto;
     }
     .tile-deadend {
-      /* Deadend: a vertical line reaching the center with a small horizontal stroke */
+      /* Deadend: vertical line from top to center with a small horizontal stroke */
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><line x1='50' y1='0' x2='50' y2='50' stroke='%235d4037' stroke-width='15' stroke-linecap='round'/><line x1='45' y1='50' x2='55' y2='50' stroke='%235d4037' stroke-width='15' stroke-linecap='round'/></svg>");
       width: 80%;
       height: 80%;
@@ -166,15 +166,15 @@
       width: 100%;
       margin-top: 15px;
     }
-    /* New Movement Controls (only visible during move phase) */
+    /* New Move Controls */
     #move-controls {
       display: none;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       width: 100%;
       margin-top: 15px;
     }
-    /* Button for skipping movement */
     #skip-move-btn {
       padding: 10px 15px;
       background: #8d6e63;
@@ -275,8 +275,6 @@
   <div id="game-container">
     <!-- Left Panel: Controls -->
     <div id="control-panel">
-      <h2>Torn</h2>
-      <div id="turn-info"></div>
       <div id="tile-controls">
         <h3>Peça Obtinguda</h3>
         <div id="tile-preview-container">
@@ -285,7 +283,7 @@
         <button id="rotate-btn" class="btn">Gira 90º</button>
         <button id="confirm-tile-btn" class="btn">Confirma peça</button>
       </div>
-      <div id="move-controls" style="display: none;">
+      <div id="move-controls">
         <button id="skip-move-btn" class="btn">Omitir moviment</button>
       </div>
     </div>
@@ -341,7 +339,7 @@
               <td><input type="number" min="0" value="10" data-type="straight"></td>
             </tr>
             <tr>
-              <td>Deadend</td>
+              <td>Tancat</td>
               <td class="preview-cell"><div class="tile tile-deadend" style="width:50px;height:50px;"></div></td>
               <td><input type="number" min="0" value="10" data-type="deadend"></td>
               <td><input type="number" min="0" value="10" data-type="deadend"></td>
@@ -360,6 +358,15 @@
 
   <script>
     window.onload = function() {
+      // Mapping of internal tile types to Catalan names
+      const tileNamesCat = {
+        cross: "creu",
+        curve: "angle recte",
+        t: "bifurcació",
+        straight: "recta",
+        deadend: "tancat"
+      };
+      
       // Base definitions for normal tiles
       const baseTiles = {
         cross: { edges: { N: true, E: true, S: true, W: true } },
@@ -417,7 +424,7 @@
           this.board = [];
           this.players = [];
           this.currentPlayerIndex = 0;
-          this.phase = "idle";
+          this.phase = "idle"; // "idle", "rotate", "place", "move"
           this.validCells = [];
           this.activeTile = null;
           this.events = [];
@@ -514,6 +521,7 @@
           document.getElementById("message").innerText = msg;
         }
         logEvent(message) {
+          // Only log events that include coordinates (placement and movement)
           const snapshot = this.saveState();
           this.events.unshift({ message, snapshot });
           this.updateLog();
@@ -678,7 +686,7 @@
               document.getElementById("tile-preview").style.border = "2px solid red";
             } else {
               document.getElementById("confirm-tile-btn").disabled = false;
-              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + this.activeTile.type + ". Pots girar-la i confirmar-la.");
+              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Pots girar-la i confirmar-la.");
               document.getElementById("tile-preview").style.border = "none";
             }
           }
@@ -740,19 +748,18 @@
             this.validCells = this.getMovableCells();
             // In move phase, show skip-move button and hide tile controls.
             document.getElementById("tile-controls").style.display = "none";
-            document.getElementById("move-controls").style.display = "block";
+            document.getElementById("move-controls").style.display = "flex";
             if (this.validCells.length === 0) {
               this.setMessage("No pots explorar ni moure't. Torn perdut.");
-              this.logEvent("No pots explorar ni moure't");
+              this.logEvent("Jugador " + this.getCurrentPlayer().name + ": no pots explorar ni moure't");
               this.endTurn();
             } else {
               this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Pots moure't o ometre.");
-              this.logEvent("Torn de " + this.getCurrentPlayer().name + ": només pots moure't");
+              this.logEvent("Jugador " + this.getCurrentPlayer().name + ": només pots moure't");
             }
             this.renderBoard();
             return;
           }
-          // If there is space for placement, we're in rotate phase.
           this.phase = "rotate";
           this.activeTile = this.drawTile();
           if (!this.activeTile) {
@@ -762,8 +769,8 @@
           // In rotate phase, show tile controls and hide move controls.
           document.getElementById("tile-controls").style.display = "flex";
           document.getElementById("move-controls").style.display = "none";
-          this.logEvent("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + this.activeTile.type);
-          this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + this.activeTile.type + ". Pots girar-la i confirmar-la.");
+          // (No log here because we only log placements and moves with coordinates)
+          this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Pots girar-la i confirmar-la.");
           document.getElementById("confirm-tile-btn").disabled = !this.isActiveTilePlaceable();
           this.updateTilePreview();
         }
@@ -777,7 +784,7 @@
             this.validCells = this.getExplorableCells();
             if (this.validCells.length === 0) {
               this.setMessage("No hi ha caselles vàlides per col·locar la peça. Torn perdut.");
-              this.logEvent("Peça no col·locable");
+              // Do not log a placement event without coordinates.
               this.endTurn();
             } else {
               this.setMessage("Explora: tria una casella adjacent per col·locar la peça.");
@@ -793,22 +800,22 @@
             cell.tile = this.activeTile;
             const currentPlayer = this.getCurrentPlayer();
             const remaining = currentPlayer.pool[this.activeTile.type] || 0;
-            this.logEvent("Jugador " + currentPlayer.name + ": Peça " + this.activeTile.type + " col·locada a (" + x + "," + y + "). Queden: " + remaining);
+            // Log placement with coordinates, remaining count, and player name.
+            this.logEvent("Jugador " + currentPlayer.name + ": Peça " + tileNamesCat[this.activeTile.type] + " col·locada a (" + x + "," + y + "). Queden: " + remaining);
             this.activeTile = null;
             this.validCells = [];
             this.phase = "move";
             this.validCells = this.getMovableCells();
-            // Show move controls and hide tile controls in move phase.
+            // In move phase, show move controls and hide tile controls.
             document.getElementById("tile-controls").style.display = "none";
-            document.getElementById("move-controls").style.display = "block";
+            document.getElementById("move-controls").style.display = "flex";
             if (this.validCells.length === 0) {
               this.setMessage("Peça col·locada. No hi ha moviments disponibles. Fi de torn.");
               this.renderBoard();
-              this.logEvent("Peça col·locada sense moviments");
+              this.logEvent("Jugador " + currentPlayer.name + ": Peça col·locada sense moviments");
               setTimeout(() => this.endTurn(), 1000);
             } else {
-              this.setMessage("Peça col·locada. Ara tria on vols moure't o prem 'Omitir moviment'.");
-              this.logEvent("Peça col·locada");
+              this.setMessage("Peça col·locada. Ara tria on vols moure't.");
             }
             this.renderBoard();
           } else if (this.phase === "move") {
@@ -825,7 +832,7 @@
           }
         }
         endTurn() {
-          this.logEvent("Fi de torn de " + this.getCurrentPlayer().name);
+          // Do not log turn end events without coordinates.
           this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
           setTimeout(() => { this.startTurn(); }, 1000);
         }
