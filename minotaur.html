@@ -43,7 +43,7 @@
     #turn-info {
       margin-bottom: 10px;
     }
-    /* Center Panel: Message, Board, and Game Buttons */
+    /* Center Panel: Message and Board */
     #board-container {
       flex: 1;
       display: flex;
@@ -100,8 +100,8 @@
       margin: auto;
     }
     .tile-deadend {
-      /* "tancat": vertical line from top to center with a small horizontal stroke */
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><line x1='50' y1='0' x2='50' y2='50' stroke='%235d4037' stroke-width='15' stroke-linecap='round'/><line x1='45' y1='50' x2='55' y2='50' stroke='%235d4037' stroke-width='15' stroke-linecap='round'/></svg>");
+      /* "tancat": thicker strokes (width 20) */
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><line x1='50' y1='0' x2='50' y2='50' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/><line x1='40' y1='50' x2='60' y2='50' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/></svg>");
       width: 80%;
       height: 80%;
       margin: auto;
@@ -220,6 +220,13 @@
       margin-top: 0;
       text-align: center;
     }
+    /* Configuration Buttons */
+    #config-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
     #config-table {
       width: 100%;
       border-collapse: collapse;
@@ -229,15 +236,35 @@
       padding: 5px;
       text-align: center;
     }
+    /* Set input width to exactly match the four arrow buttons (4 x 16px = 64px) */
     #config-table input {
-      width: 60px;
+      width: 64px;
     }
-    #config-table .preview-cell {
-      width: 50px;
+    /* Wrap each input in a container that also holds the arrow gizmos */
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    #config-start-btn {
-      margin-top: 10px;
+    .arrow-container {
+      display: flex;
+      justify-content: center;
+      gap: 2px;
+      margin-top: 2px;
+      flex-wrap: wrap;
     }
+    .arrow-btn {
+      font-size: 10px;
+      line-height: 1;
+      padding: 2px;
+      width: 16px;
+      height: 16px;
+      text-align: center;
+      border: 1px solid #8d6e63;
+      background: #f8f1e4;
+      cursor: pointer;
+    }
+    /* =================== Event Log =================== */
     #event-log-container {
       flex: 1;
       padding: 10px;
@@ -282,18 +309,15 @@
         <button id="confirm-tile-btn" class="btn">Confirma peça</button>
       </div>
       <div id="move-controls">
-        <button id="skip-move-btn" class="btn">Omitir moviment</button>
+        <button id="skip-move-btn" class="btn">Omitir exploració</button>
       </div>
     </div>
-    <!-- Center Panel: Message, Board, and Game Buttons -->
+    <!-- Center Panel: Message and Board -->
     <div id="board-container">
       <div id="message"></div>
       <div id="board"></div>
-      <div id="game-buttons">
-        <button id="restart-btn" class="btn">Reinicia</button>
-      </div>
     </div>
-    <!-- Right Panel: Configuration (top half) and Event Log (bottom half) -->
+    <!-- Right Panel: Configuration and Event Log -->
     <div id="log-panel">
       <div id="config-panel">
         <h3>Configuració Inicial</h3>
@@ -311,41 +335,195 @@
             <tr>
               <td>Cruce</td>
               <td class="preview-cell"><div class="tile tile-cross" style="width:50px;height:50px;"></div></td>
-              <td><input type="number" min="0" value="10" data-type="cross"></td>
-              <td><input type="number" min="0" value="10" data-type="cross"></td>
-              <td><input type="number" min="0" value="10" data-type="cross"></td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="cross">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="cross">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="cross">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
             </tr>
+            <!-- Similar structure for other tile types -->
             <tr>
               <td>Curva</td>
               <td class="preview-cell"><div class="tile tile-curve" style="width:50px;height:50px;"></div></td>
-              <td><input type="number" min="0" value="10" data-type="curve"></td>
-              <td><input type="number" min="0" value="10" data-type="curve"></td>
-              <td><input type="number" min="0" value="10" data-type="curve"></td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="curve">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="curve">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="curve">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
             </tr>
             <tr>
               <td>Bifurcació</td>
               <td class="preview-cell"><div class="tile tile-t" style="width:50px;height:50px;"></div></td>
-              <td><input type="number" min="0" value="10" data-type="t"></td>
-              <td><input type="number" min="0" value="10" data-type="t"></td>
-              <td><input type="number" min="0" value="10" data-type="t"></td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="t">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="t">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="t">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
             </tr>
             <tr>
               <td>Recta</td>
               <td class="preview-cell"><div class="tile tile-straight" style="width:50px;height:50px;"></div></td>
-              <td><input type="number" min="0" value="10" data-type="straight"></td>
-              <td><input type="number" min="0" value="10" data-type="straight"></td>
-              <td><input type="number" min="0" value="10" data-type="straight"></td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="straight">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="straight">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="straight">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
             </tr>
             <tr>
               <td>Tancat</td>
               <td class="preview-cell"><div class="tile tile-deadend" style="width:50px;height:50px;"></div></td>
-              <td><input type="number" min="0" value="10" data-type="deadend"></td>
-              <td><input type="number" min="0" value="10" data-type="deadend"></td>
-              <td><input type="number" min="0" value="10" data-type="deadend"></td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="deadend">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="deadend">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="input-container">
+                  <input type="number" min="0" value="10" data-type="deadend">
+                  <div class="arrow-container">
+                    <button class="arrow-btn" onclick="propagateLeft(this)">←</button>
+                    <button class="arrow-btn" onclick="propagateRight(this)">→</button>
+                    <button class="arrow-btn" onclick="propagateUp(this)">↑</button>
+                    <button class="arrow-btn" onclick="propagateDown(this)">↓</button>
+                  </div>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
-        <button id="config-start-btn" class="btn">Iniciar</button>
+        <div id="config-buttons">
+          <button id="config-start-btn" class="btn">Iniciar</button>
+          <button id="config-reset-btn" class="btn" disabled>Reinicia</button>
+        </div>
       </div>
       <div id="event-log-container">
         <h3>Log d'Events</h3>
@@ -355,6 +533,73 @@
   </div>
 
   <script>
+    // Propagation functions using closest() to reliably obtain the TD.
+    function propagateLeft(btn) {
+      let td = btn.closest("td");
+      let input = td.querySelector("input");
+      let value = input.value;
+      let tr = td.closest("tr");
+      let cells = Array.from(tr.cells);
+      let currentIndex = td.cellIndex;
+      cells.forEach((cell, index) => {
+        if (index < currentIndex) {
+          let inp = cell.querySelector("input");
+          if (inp) { inp.value = value; }
+        }
+      });
+    }
+    function propagateRight(btn) {
+      let td = btn.closest("td");
+      let input = td.querySelector("input");
+      let value = input.value;
+      let tr = td.closest("tr");
+      let cells = Array.from(tr.cells);
+      let currentIndex = td.cellIndex;
+      cells.forEach((cell, index) => {
+        if (index > currentIndex) {
+          let inp = cell.querySelector("input");
+          if (inp) { inp.value = value; }
+        }
+      });
+    }
+    function propagateUp(btn) {
+      let td = btn.closest("td");
+      let input = td.querySelector("input");
+      let value = input.value;
+      let tr = td.closest("tr");
+      let table = tr.closest("tbody") || tr.closest("table");
+      let rows = Array.from(table.rows);
+      let currentRowIndex = tr.rowIndex;
+      rows.forEach((row, index) => {
+        if (index < currentRowIndex) {
+          let cell = row.cells[td.cellIndex];
+          if (cell) {
+            let inp = cell.querySelector("input");
+            if (inp) { inp.value = value; }
+          }
+        }
+      });
+    }
+    function propagateDown(btn) {
+      let td = btn.closest("td");
+      let input = td.querySelector("input");
+      let value = input.value;
+      let tr = td.closest("tr");
+      let table = tr.closest("tbody") || tr.closest("table");
+      let rows = Array.from(table.rows);
+      let currentRowIndex = tr.rowIndex;
+      rows.forEach((row, index) => {
+        if (index > currentRowIndex) {
+          let cell = row.cells[td.cellIndex];
+          if (cell) {
+            let inp = cell.querySelector("input");
+            if (inp) { inp.value = value; }
+          }
+        }
+      });
+    }
+
+    // Main game code
     window.onload = function() {
       // Mapping of internal tile types to Catalan names
       const tileNamesCat = {
@@ -510,7 +755,7 @@
         }
         updateTurnInfo() {
           const infoDiv = document.getElementById("turn-info");
-          if(infoDiv) {
+          if (infoDiv) {
             const currentPlayer = this.getCurrentPlayer();
             infoDiv.innerHTML = `<p>Torn actiu: ${currentPlayer.name}</p>`;
           }
@@ -519,10 +764,10 @@
           document.getElementById("message").innerText = msg;
         }
         logEvent(message) {
-          // Only log events that include coordinates (placement and movement)
           const snapshot = this.saveState();
           this.events.unshift({ message, snapshot });
           this.updateLog();
+          updateConfigTable();
         }
         updateLog() {
           const logDiv = document.getElementById("event-log");
@@ -547,12 +792,10 @@
             logDiv.appendChild(entry);
           });
         }
-        toggleLog() {
-          // Log is always visible.
-        }
+        toggleLog() { }
         rewindToEvent(index) {
           const evt = this.events[index];
-          if(evt) {
+          if (evt) {
             this.restoreState(evt.snapshot);
             this.logEvent("Rebobinat a: " + evt.message);
           }
@@ -598,11 +841,11 @@
           this.board = state.board.map(rowData => {
             return rowData.map(cellData => {
               const cell = new Cell(cellData.x, cellData.y);
-              if(cellData.tile) {
+              if (cellData.tile) {
                 cell.tile = new Tile(cellData.tile.type, cellData.tile.edges, cellData.tile.special);
                 cell.tile.rotation = cellData.tile.rotation;
               }
-              if(cellData.player) {
+              if (cellData.player) {
                 cell.player = new Player(cellData.player.name, cellData.player.x, cellData.player.y, cellData.player.cssClass);
                 cell.player.pool = Object.assign({}, cellData.player.pool);
               }
@@ -614,7 +857,7 @@
             p.pool = Object.assign({}, pData.pool);
             return p;
           });
-          if(state.activeTile) {
+          if (state.activeTile) {
             this.activeTile = new Tile(state.activeTile.type, state.activeTile.edges, state.activeTile.special);
             this.activeTile.rotation = state.activeTile.rotation;
           } else {
@@ -649,19 +892,6 @@
           const opposites = { N: "S", E: "W", S: "N", W: "E" };
           return opposites[dir];
         }
-        validateActiveTile() {
-          // Validate connectivity immediately after drawing the tile.
-          if (this.activeTile) {
-            if (!this.isActiveTilePlaceable()) {
-              document.getElementById("confirm-tile-btn").disabled = true;
-              document.getElementById("tile-preview").style.border = "2px solid red";
-              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça " + tileNamesCat[this.activeTile.type] + " amb aquesta orientació no és vàlida.");
-            } else {
-              document.getElementById("confirm-tile-btn").disabled = false;
-              document.getElementById("tile-preview").style.border = "none";
-            }
-          }
-        }
         isActiveTilePlaceable() {
           if (!this.activeTile) return false;
           return this.getExplorableCells().length > 0;
@@ -686,6 +916,39 @@
             const dir = this.getDirection(current, coord);
             return currentTile.edges[dir] && cell.tile.edges[this.getOpposite(dir)];
           });
+        }
+        anyRotationValid() {
+          let current = this.getCurrentPlayerCell();
+          let freeAdj = this.getAdjacentCoords(current.x, current.y).filter(coord => {
+            let cell = this.getCell(coord.x, coord.y);
+            return cell && !cell.tile;
+          });
+          for (let i = 0; i < 4; i++) {
+            let testTile = this.activeTile.clone();
+            for (let j = 0; j < i; j++) {
+              testTile.rotate();
+            }
+            for (let coord of freeAdj) {
+              if (current.tile.edges[coord.dir] && testTile.edges[this.getOpposite(coord.dir)]) {
+                return true;
+              }
+            }
+          }
+          return false;
+        }
+        validateActiveTile() {
+          if (this.activeTile) {
+            if (!this.anyRotationValid()) {
+              document.getElementById("confirm-tile-btn").disabled = true;
+              document.getElementById("tile-preview").style.border = "2px solid red";
+              document.getElementById("move-controls").style.display = "flex";
+              document.getElementById("tile-controls").style.display = "none";
+              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". La peça " + tileNamesCat[this.activeTile.type] + " no es pot col·locar en cap orientació. Prem 'Omitir exploració' per retornar-la.");
+            } else {
+              document.getElementById("confirm-tile-btn").disabled = false;
+              document.getElementById("tile-preview").style.border = "none";
+            }
+          }
         }
         rotateActiveTile() {
           if (this.activeTile && this.phase === "rotate") {
@@ -755,12 +1018,12 @@
             return cell && !cell.tile;
           });
           if (freeAdjacent.length === 0) {
-            // No free adjacent cells to place a tile – skip drawing.
+            // No free adjacent cells for placement
             this.phase = "move";
             this.validCells = this.getMovableCells();
             document.getElementById("tile-controls").style.display = "none";
             document.getElementById("move-controls").style.display = "flex";
-            this.setMessage("No hi ha caselles disponibles per col·locar la peça. Prem 'Omitir moviment' per continuar.");
+            this.setMessage("No hi ha caselles disponibles per col·locar la peça. Prem 'Omitir exploració' per continuar.");
             this.logEvent("Jugador " + this.getCurrentPlayer().name + ": no hi ha caselles per col·locar la peça");
             this.renderBoard();
             return;
@@ -774,7 +1037,6 @@
           document.getElementById("tile-controls").style.display = "flex";
           document.getElementById("move-controls").style.display = "none";
           this.updateTilePreview();
-          // Immediately validate connectivity and update feedback
           this.validateActiveTile();
           this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Pots girar-la i confirmar-la.");
           document.getElementById("confirm-tile-btn").disabled = !this.isActiveTilePlaceable();
@@ -837,17 +1099,6 @@
           this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
           setTimeout(() => { this.startTurn(); }, 1000);
         }
-        validateActiveTile() {
-          if (this.activeTile) {
-            if (!this.isActiveTilePlaceable()) {
-              document.getElementById("confirm-tile-btn").disabled = true;
-              document.getElementById("tile-preview").style.border = "2px solid red";
-            } else {
-              document.getElementById("confirm-tile-btn").disabled = false;
-              document.getElementById("tile-preview").style.border = "none";
-            }
-          }
-        }
       }
       
       // -------------------- Configuration Logic --------------------
@@ -856,13 +1107,13 @@
         let pools = { "Jugador 1": {}, "Jugador 2": {}, "Jugador 3": {} };
         inputs.forEach(input => {
           const type = input.getAttribute("data-type");
-          const cellIndex = input.parentElement.cellIndex;
+          let td = input.closest("td");
+          let cellIndex = td ? td.cellIndex : -1;
           let player;
-          // Columns: 0:"Tipus", 1:"Previsualització", 2:"Jugador 1", 3:"Jugador 2", 4:"Jugador 3"
           if(cellIndex === 2) player = "Jugador 1";
           else if(cellIndex === 3) player = "Jugador 2";
           else if(cellIndex === 4) player = "Jugador 3";
-          pools[player][type] = parseInt(input.value, 10);
+          if (player) { pools[player][type] = parseInt(input.value, 10); }
         });
         return pools;
       }
@@ -873,6 +1124,23 @@
         document.getElementById("config-start-btn").disabled = true;
       }
       
+      function enableConfigurationButtons(startEnabled) {
+        document.getElementById("config-start-btn").disabled = !startEnabled;
+        document.getElementById("config-reset-btn").disabled = startEnabled;
+      }
+      
+      function updateConfigTable() {
+        let inputs = document.querySelectorAll("#config-table input");
+        inputs.forEach(input => {
+          let type = input.getAttribute("data-type");
+          let td = input.closest("td");
+          let playerIndex = td.cellIndex - 2;
+          if (game && game.players && game.players[playerIndex]) {
+            input.value = game.players[playerIndex].pool[type];
+          }
+        });
+      }
+      
       // -------------------- Game Initialization --------------------
       let game;
       function startGame() {
@@ -881,6 +1149,7 @@
           player.pool = Object.assign({}, pools[player.name]);
         });
         disableConfiguration();
+        enableConfigurationButtons(false);
         game.startTurn();
       }
       
@@ -900,12 +1169,25 @@
         game.confirmTile();
       });
       document.getElementById("skip-move-btn").addEventListener("click", () => {
-        game.endTurn();
+        if (game.phase === "rotate" && !game.anyRotationValid()) {
+          let tileType = game.activeTile.type;
+          let currentPlayer = game.getCurrentPlayer();
+          currentPlayer.pool[tileType]++;
+          game.logEvent("Jugador " + currentPlayer.name + ": retorna peça " + tileNamesCat[tileType] + " per no ser vàlida");
+          game.activeTile = null;
+          game.phase = "move";
+          game.validCells = game.getMovableCells();
+          document.getElementById("tile-controls").style.display = "none";
+          document.getElementById("move-controls").style.display = "flex";
+          game.renderBoard();
+        } else if (game.phase === "move") {
+          game.endTurn();
+        }
       });
       document.getElementById("config-start-btn").addEventListener("click", () => {
         startGame();
       });
-      document.getElementById("restart-btn").addEventListener("click", () => {
+      document.getElementById("config-reset-btn").addEventListener("click", () => {
         resetGame();
       });
     };
