@@ -21,7 +21,22 @@
       box-sizing: border-box;
       padding: 5px;
     }
-    /* Left Panel: Controls */
+    /* =================== Spinner Style =================== */
+    #spinner {
+      display: none;
+      width: 30px;
+      height: 30px;
+      border: 4px solid #ccc;
+      border-top: 4px solid #8d6e63;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 10px;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    /* =================== Left Panel: Controls =================== */
     #control-panel {
       width: 300px;
       padding: 15px;
@@ -43,7 +58,7 @@
     #turn-info {
       margin-bottom: 10px;
     }
-    /* Center Panel: Message and Board */
+    /* =================== Center Panel: Message and Board =================== */
     #board-container {
       flex: 1;
       display: flex;
@@ -100,7 +115,8 @@
       margin: auto;
     }
     .tile-deadend {
-      /* "tancat": stroke extends to y=60 with horizontal stroke at y=60 */
+      /* "tancat": stroke extends from y=0 to y=60, horizontal stroke at y=60;
+         using background-size: 100% 100% for stretch */
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><line x1='50' y1='0' x2='50' y2='60' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/><line x1='40' y1='60' x2='60' y2='60' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/></svg>");
       background-size: 100% 100%;
       background-repeat: no-repeat;
@@ -298,6 +314,8 @@
   <div id="game-container">
     <!-- Left Panel: Controls -->
     <div id="control-panel">
+      <!-- Spinner to indicate turn transition -->
+      <div id="spinner"></div>
       <div id="tile-controls">
         <h3>Peça Obtinguda</h3>
         <div id="tile-preview-container">
@@ -367,7 +385,7 @@
                 </div>
               </td>
             </tr>
-            <!-- Similar structure for the remaining tile types (Curva, Bifurcació, Recta, Tancat) -->
+            <!-- Similar rows for Curva, Bifurcació, Recta, Tancat -->
             <tr>
               <td>Curva</td>
               <td class="preview-cell"><div class="tile tile-curve" style="width:50px;height:50px;"></div></td>
@@ -531,7 +549,7 @@
   </div>
 
   <script>
-    // Propagation functions using closest() and proper row indices
+    // Propagation functions using closest() and proper row indices.
     function propagateLeft(btn) {
       let td = btn.closest("td");
       let input = td.querySelector("input");
@@ -605,6 +623,14 @@
         t: "bifurcació",
         straight: "recta",
         deadend: "tancat"
+      };
+      
+      // Delta values for each direction
+      const deltas = {
+        N: { dx: 0, dy: -1 },
+        E: { dx: 1, dy: 0 },
+        S: { dx: 0, dy: 1 },
+        W: { dx: -1, dy: 0 }
       };
       
       // Base definitions for normal tiles
@@ -899,7 +925,24 @@
           return adj.filter(coord => {
             const cell = this.getCell(coord.x, coord.y);
             if (!cell || cell.tile) return false;
-            return current.tile.edges[coord.dir] && this.activeTile.edges[this.getOpposite(coord.dir)];
+            // Must connect with the player's cell
+            if (!current.tile.edges[coord.dir] || !this.activeTile.edges[this.getOpposite(coord.dir)]) {
+              return false;
+            }
+            // If the active tile is a curve, ensure that the other active edge (the one not used for connection) leads to an in-bound cell.
+            if (this.activeTile.type === "curve") {
+              // Determine the two active edges.
+              let activeEdges = Object.keys(this.activeTile.edges).filter(d => this.activeTile.edges[d]);
+              // Remove the one that is used for connection.
+              let used = this.getOpposite(coord.dir);
+              let others = activeEdges.filter(d => d !== used);
+              if (others.length > 0) {
+                let otherDir = others[0];
+                let delta = deltas[otherDir];
+                if (!this.getCell(coord.x + delta.dx, coord.y + delta.dy)) return false;
+              }
+            }
+            return true;
           });
         }
         getMovableCells() {
@@ -927,6 +970,19 @@
             }
             for (let coord of freeAdj) {
               if (current.tile.edges[coord.dir] && testTile.edges[this.getOpposite(coord.dir)]) {
+                // For curves, also check the extra neighbor for the unused edge.
+                if (testTile.type === "curve") {
+                  let activeEdges = Object.keys(testTile.edges).filter(d => testTile.edges[d]);
+                  let used = this.getOpposite(coord.dir);
+                  let others = activeEdges.filter(d => d !== used);
+                  if (others.length > 0) {
+                    let otherDir = others[0];
+                    let delta = deltas[otherDir];
+                    if (!this.getCell(coord.x + delta.dx, coord.y + delta.dy)) {
+                      continue;
+                    }
+                  }
+                }
                 return true;
               }
             }
@@ -937,14 +993,12 @@
           if (this.activeTile) {
             if (!this.anyRotationValid()) {
               document.getElementById("confirm-tile-btn").disabled = true;
-              // Apply red border to the container
               document.getElementById("tile-preview-container").style.border = "2px solid red";
               document.getElementById("move-controls").style.display = "flex";
               document.getElementById("tile-controls").style.display = "none";
-              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". La peça " + tileNamesCat[this.activeTile.type] + " no es pot col·locar en cap orientació. Prem 'Ometre moviment' per retornar-la.");
+              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Orientació no és vàlida: la peça " + tileNamesCat[this.activeTile.type] + " no es pot col·locar. Prem 'Ometre moviment' per retornar-la.");
             } else {
               document.getElementById("confirm-tile-btn").disabled = false;
-              // Restore normal border
               document.getElementById("tile-preview-container").style.border = "2px dashed #8d6e63";
             }
           }
@@ -956,7 +1010,7 @@
             if (!this.isActiveTilePlaceable()) {
               document.getElementById("confirm-tile-btn").disabled = true;
               document.getElementById("tile-preview-container").style.border = "2px solid red";
-              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça " + tileNamesCat[this.activeTile.type] + " amb aquesta orientació no és vàlida.");
+              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Orientació no és vàlida: la peça " + tileNamesCat[this.activeTile.type] + " amb aquesta orientació no és vàlida.");
             } else {
               document.getElementById("confirm-tile-btn").disabled = false;
               document.getElementById("tile-preview-container").style.border = "2px dashed #8d6e63";
@@ -967,7 +1021,6 @@
         updateTilePreview() {
           const preview = document.getElementById("tile-preview");
           preview.innerHTML = "";
-          preview.style.border = "none";
           if (this.activeTile) {
             const tileElem = document.createElement("div");
             tileElem.classList.add("tile");
@@ -1076,7 +1129,7 @@
               this.setMessage("Peça col·locada. No hi ha moviments disponibles. Fi de torn.");
               this.renderBoard();
               this.logEvent("Jugador " + currentPlayer.name + ": Peça col·locada sense moviments");
-              setTimeout(() => this.endTurn(), 1000);
+              setTimeout(() => this.endTurn(), 500);
             } else {
               this.setMessage("Peça col·locada. Ara tria on vols moure't.");
             }
@@ -1091,12 +1144,17 @@
             this.setMessage("El jugador " + currentPlayer.name + " s'ha mogut a (" + x + "," + y + "). Fi de torn.");
             this.renderBoard();
             this.logEvent("Jugador " + currentPlayer.name + " mogut a (" + x + "," + y + ")");
-            setTimeout(() => this.endTurn(), 1000);
+            setTimeout(() => this.endTurn(), 500);
           }
         }
         endTurn() {
+          // Show spinner during turn transition
+          document.getElementById("spinner").style.display = "block";
           this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-          setTimeout(() => { this.startTurn(); }, 1000);
+          setTimeout(() => { 
+            document.getElementById("spinner").style.display = "none";
+            this.startTurn(); 
+          }, 500);
         }
       }
       
