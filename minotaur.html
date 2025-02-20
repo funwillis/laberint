@@ -77,7 +77,7 @@
       position: relative;
       box-shadow: inset 0 0 2px #999;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background 0.3s ease;
     }
     .cell.highlight {
       background: #c8e6c9;
@@ -100,15 +100,13 @@
       margin: auto;
     }
     .tile-deadend {
-      /* Deadend: vertical line from top to center with a small horizontal stroke */
+      /* "tancat": vertical line from top to center with a small horizontal stroke */
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><line x1='50' y1='0' x2='50' y2='50' stroke='%235d4037' stroke-width='15' stroke-linecap='round'/><line x1='45' y1='50' x2='55' y2='50' stroke='%235d4037' stroke-width='15' stroke-linecap='round'/></svg>");
       width: 80%;
       height: 80%;
       margin: auto;
       background-size: contain;
     }
-    /* Normal Tiles using inline SVGs.
-       The "curve" piece is now a right-angle (corner) piece with two adjacent edges. */
     .tile-cross {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='100' fill='%235d4037'/><rect x='0' y='40' width='100' height='20' fill='%235d4037'/></svg>");
     }
@@ -183,7 +181,7 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 16px;
-      transition: background 0.3s;
+      transition: background 0.3s ease;
     }
     #skip-move-btn:hover { background: #6d4c41; }
     #tile-preview-container {
@@ -266,7 +264,7 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 16px;
-      transition: background 0.3s;
+      transition: background 0.3s ease;
     }
     .btn:hover { background: #6d4c41; }
   </style>
@@ -651,6 +649,23 @@
           const opposites = { N: "S", E: "W", S: "N", W: "E" };
           return opposites[dir];
         }
+        validateActiveTile() {
+          // Validate connectivity immediately after drawing the tile.
+          if (this.activeTile) {
+            if (!this.isActiveTilePlaceable()) {
+              document.getElementById("confirm-tile-btn").disabled = true;
+              document.getElementById("tile-preview").style.border = "2px solid red";
+              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça " + tileNamesCat[this.activeTile.type] + " amb aquesta orientació no és vàlida.");
+            } else {
+              document.getElementById("confirm-tile-btn").disabled = false;
+              document.getElementById("tile-preview").style.border = "none";
+            }
+          }
+        }
+        isActiveTilePlaceable() {
+          if (!this.activeTile) return false;
+          return this.getExplorableCells().length > 0;
+        }
         getExplorableCells() {
           const current = this.getCurrentPlayerCell();
           const adj = this.getAdjacentCoords(current.x, current.y);
@@ -672,22 +687,18 @@
             return currentTile.edges[dir] && cell.tile.edges[this.getOpposite(dir)];
           });
         }
-        isActiveTilePlaceable() {
-          if (!this.activeTile) return false;
-          return this.getExplorableCells().length > 0;
-        }
         rotateActiveTile() {
           if (this.activeTile && this.phase === "rotate") {
             this.activeTile.rotate();
             this.updateTilePreview();
             if (!this.isActiveTilePlaceable()) {
               document.getElementById("confirm-tile-btn").disabled = true;
-              this.setMessage("Rotació no vàlida: la peça no es pot col·locar amb aquesta orientació.");
               document.getElementById("tile-preview").style.border = "2px solid red";
+              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça " + tileNamesCat[this.activeTile.type] + " amb aquesta orientació no és vàlida.");
             } else {
               document.getElementById("confirm-tile-btn").disabled = false;
-              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Pots girar-la i confirmar-la.");
               document.getElementById("tile-preview").style.border = "none";
+              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça " + tileNamesCat[this.activeTile.type] + " obtinguda. Pots girar-la i confirmar-la.");
             }
           }
         }
@@ -744,19 +755,13 @@
             return cell && !cell.tile;
           });
           if (freeAdjacent.length === 0) {
+            // No free adjacent cells to place a tile – skip drawing.
             this.phase = "move";
             this.validCells = this.getMovableCells();
-            // In move phase, show skip-move button and hide tile controls.
             document.getElementById("tile-controls").style.display = "none";
             document.getElementById("move-controls").style.display = "flex";
-            if (this.validCells.length === 0) {
-              this.setMessage("No pots explorar ni moure't. Torn perdut.");
-              this.logEvent("Jugador " + this.getCurrentPlayer().name + ": no pots explorar ni moure't");
-              this.endTurn();
-            } else {
-              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Pots moure't o ometre.");
-              this.logEvent("Jugador " + this.getCurrentPlayer().name + ": només pots moure't");
-            }
+            this.setMessage("No hi ha caselles disponibles per col·locar la peça. Prem 'Omitir moviment' per continuar.");
+            this.logEvent("Jugador " + this.getCurrentPlayer().name + ": no hi ha caselles per col·locar la peça");
             this.renderBoard();
             return;
           }
@@ -766,13 +771,13 @@
             this.setMessage("No tens més peces per explorar.");
             return;
           }
-          // In rotate phase, show tile controls and hide move controls.
           document.getElementById("tile-controls").style.display = "flex";
           document.getElementById("move-controls").style.display = "none";
-          // (No log here because we only log placements and moves with coordinates)
+          this.updateTilePreview();
+          // Immediately validate connectivity and update feedback
+          this.validateActiveTile();
           this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Pots girar-la i confirmar-la.");
           document.getElementById("confirm-tile-btn").disabled = !this.isActiveTilePlaceable();
-          this.updateTilePreview();
         }
         confirmTile() {
           if (this.activeTile && this.phase === "rotate") {
@@ -784,7 +789,6 @@
             this.validCells = this.getExplorableCells();
             if (this.validCells.length === 0) {
               this.setMessage("No hi ha caselles vàlides per col·locar la peça. Torn perdut.");
-              // Do not log a placement event without coordinates.
               this.endTurn();
             } else {
               this.setMessage("Explora: tria una casella adjacent per col·locar la peça.");
@@ -800,13 +804,11 @@
             cell.tile = this.activeTile;
             const currentPlayer = this.getCurrentPlayer();
             const remaining = currentPlayer.pool[this.activeTile.type] || 0;
-            // Log placement with coordinates, remaining count, and player name.
             this.logEvent("Jugador " + currentPlayer.name + ": Peça " + tileNamesCat[this.activeTile.type] + " col·locada a (" + x + "," + y + "). Queden: " + remaining);
             this.activeTile = null;
             this.validCells = [];
             this.phase = "move";
             this.validCells = this.getMovableCells();
-            // In move phase, show move controls and hide tile controls.
             document.getElementById("tile-controls").style.display = "none";
             document.getElementById("move-controls").style.display = "flex";
             if (this.validCells.length === 0) {
@@ -832,9 +834,19 @@
           }
         }
         endTurn() {
-          // Do not log turn end events without coordinates.
           this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
           setTimeout(() => { this.startTurn(); }, 1000);
+        }
+        validateActiveTile() {
+          if (this.activeTile) {
+            if (!this.isActiveTilePlaceable()) {
+              document.getElementById("confirm-tile-btn").disabled = true;
+              document.getElementById("tile-preview").style.border = "2px solid red";
+            } else {
+              document.getElementById("confirm-tile-btn").disabled = false;
+              document.getElementById("tile-preview").style.border = "none";
+            }
+          }
         }
       }
       
@@ -882,6 +894,7 @@
       // -------------------- Button Event Listeners --------------------
       document.getElementById("rotate-btn").addEventListener("click", () => {
         game.rotateActiveTile();
+        game.validateActiveTile();
       });
       document.getElementById("confirm-tile-btn").addEventListener("click", () => {
         game.confirmTile();
