@@ -37,7 +37,7 @@
       to { transform: rotate(360deg); }
     }
     /* =================== Left Panel: Controls =================== */
-    /* The left panel is always visible; its buttons remain inactive until a game is started */
+    /* Always visible; buttons do nothing until the game is started */
     #control-panel {
       width: 300px;
       padding: 15px;
@@ -58,6 +58,15 @@
     }
     #turn-info {
       margin-bottom: 10px;
+    }
+    /* Turn info style with a subtle gold border */
+    #turn-info p {
+      background: linear-gradient(45deg, rgba(255,215,0,0.3), rgba(255,215,0,0.1));
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-weight: bold;
+      text-align: center;
+      border: 1px solid gold;
     }
     /* =================== Choice Panel =================== */
     #choice-controls {
@@ -123,10 +132,11 @@
     .cell.highlight {
       background: #c8e6c9;
     }
-    /* Highlight the cell with the active player */
-    .active-player {
-      border: 2px solid gold;
-      box-shadow: 0 0 5px 3px gold;
+    /* Instead of shifting the entire cell, we now apply the active glow only to the player's marker */
+    .active-marker {
+      box-shadow: 0 0 10px 4px gold;
+      transform: translate(-50%, -50%) scale(1.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     .cell-coord {
       position: absolute;
@@ -193,12 +203,18 @@
       left: 50%;
       transform: translate(-50%, -50%);
       border: 2px solid #fff;
-      box-shadow: 0 0 3px rgba(0,0,0,0.7);
+      box-shadow: 0 0 8px rgba(0,0,0,0.5);
       z-index: 15;
     }
     .player.player1 { background: #2196F3; }
     .player.player2 { background: #4CAF50; }
     .player.player3 { background: #FF9800; }
+    /* The active marker gets an extra glow (active-marker class is added in renderBoard) */
+    .active-marker {
+      box-shadow: 0 0 10px 4px gold;
+      transform: translate(-50%, -50%) scale(1.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
     /* =================== Control Panel Groups =================== */
     #choice-controls, #tile-controls, #move-controls {
       width: 100%;
@@ -227,6 +243,29 @@
       justify-content: center;
       align-items: center;
       background: #fff;
+      position: relative;
+      transition: border 0.3s ease;
+    }
+    /* Red overlay for invalid tile orientation */
+    #invalid-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 0, 0, 0.3);
+      color: red;
+      font-size: 24px;
+      font-weight: bold;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #tile-preview-container.invalid #invalid-overlay {
+      opacity: 1;
     }
     #tile-preview {
       width: 100%;
@@ -343,6 +382,7 @@
         <h3>Peça Obtinguda</h3>
         <div id="tile-preview-container">
           <div id="tile-preview"></div>
+          <div id="invalid-overlay">!</div>
         </div>
         <button id="rotate-btn" class="btn">Gira 90º</button>
         <button id="confirm-tile-btn" class="btn">Confirma peça</button>
@@ -574,7 +614,7 @@
   </div>
   
   <script>
-    // Declare global variable using var so it is accessible everywhere
+    // Declare global variable so it's accessible everywhere.
     var game = null;
     
     // Global propagation functions
@@ -774,8 +814,14 @@
             const cell = this.getCell(x, y);
             const cellDiv = document.createElement("div");
             cellDiv.classList.add("cell");
-            if (cell.player && cell.player.name === currentPlayer.name) {
-              cellDiv.classList.add("active-player");
+            if (cell.player) {
+              let playerDiv = document.createElement("div");
+              playerDiv.classList.add("player");
+              // Add the player's specific color based on their CSS class (defined in CSS)
+              if (cell.player.name === currentPlayer.name) {
+                playerDiv.classList.add("active-marker");
+              }
+              cellDiv.appendChild(playerDiv);
             }
             cellDiv.dataset.x = x;
             cellDiv.dataset.y = y;
@@ -1009,29 +1055,34 @@
         }
         return false;
       }
+      // New helper: updateTileFeedback – always update the preview and then validate it.
+      updateTileFeedback() {
+        this.updateTilePreview();
+        this.validateActiveTile();
+      }
       validateActiveTile() {
         if (this.activeTile) {
           if (!this.anyRotationValid()) {
             document.getElementById("confirm-tile-btn").disabled = true;
-            document.getElementById("tile-preview-container").style.border = "2px solid red";
+            document.getElementById("tile-preview-container").classList.add("invalid");
             this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Orientació no és vàlida: la peça " + tileNamesCat[this.activeTile.type] + " no es pot col·locar. Prem 'Ometre moviment' per retornar-la.");
           } else {
             document.getElementById("confirm-tile-btn").disabled = false;
-            document.getElementById("tile-preview-container").style.border = "2px dashed #8d6e63";
+            document.getElementById("tile-preview-container").classList.remove("invalid");
           }
         }
       }
       rotateActiveTile() {
         if (this.activeTile && this.phase === "rotate") {
           this.activeTile.rotate();
-          this.updateTilePreview();
+          this.updateTileFeedback();
           if (!this.isActiveTilePlaceable()) {
             document.getElementById("confirm-tile-btn").disabled = true;
-            document.getElementById("tile-preview-container").style.border = "2px solid red";
+            document.getElementById("tile-preview-container").classList.add("invalid");
             this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Orientació no és vàlida: la peça " + tileNamesCat[this.activeTile.type] + " amb aquesta orientació no és vàlida.");
           } else {
             document.getElementById("confirm-tile-btn").disabled = false;
-            document.getElementById("tile-preview-container").style.border = "2px dashed #8d6e63";
+            document.getElementById("tile-preview-container").classList.remove("invalid");
             this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça " + tileNamesCat[this.activeTile.type] + " obtinguda. Pots girar-la i confirmar-la.");
           }
         }
@@ -1119,8 +1170,7 @@
         }
         document.getElementById("tile-controls").style.display = "flex";
         document.getElementById("move-controls").style.display = "none";
-        this.updateTilePreview();
-        this.validateActiveTile();
+        this.updateTileFeedback();
         this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Pots girar-la i confirmar-la.");
         document.getElementById("confirm-tile-btn").disabled = !this.isActiveTilePlaceable();
       }
@@ -1196,10 +1246,15 @@
       endTurn() {
         document.getElementById("spinner").style.display = "block";
         this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-        setTimeout(() => {
+        setTimeout(() => { 
           document.getElementById("spinner").style.display = "none";
-          this.startTurn();
+          this.startTurn(); 
         }, 500);
+      }
+      // New helper that updates the tile preview and then validates it.
+      updateTileFeedback() {
+        this.updateTilePreview();
+        this.validateActiveTile();
       }
     }
     
@@ -1255,7 +1310,6 @@
       });
       disableConfiguration();
       enableConfigurationButtons(false);
-      // The left panel is already visible; now start the turn.
       game.startTurn();
     }
     
@@ -1266,7 +1320,6 @@
       
       document.getElementById("rotate-btn").addEventListener("click", () => {
         game.rotateActiveTile();
-        game.validateActiveTile();
       });
       document.getElementById("confirm-tile-btn").addEventListener("click", () => {
         game.confirmTile();
@@ -1288,7 +1341,7 @@
         }
       });
       
-      // Attach event listeners for the choice panel buttons:
+      // Attach event listeners for the choice panel buttons.
       document.getElementById("explore-btn").addEventListener("click", () => {
         if (document.getElementById("explore-btn").disabled) {
           game.setMessage("No pots explorar en aquesta situació.");
