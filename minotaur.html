@@ -100,12 +100,10 @@
       margin: auto;
     }
     .tile-deadend {
-      /* "tancat": thicker strokes (width 20) */
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><line x1='50' y1='0' x2='50' y2='50' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/><line x1='40' y1='50' x2='60' y2='50' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/></svg>");
-      width: 80%;
-      height: 80%;
-      margin: auto;
-      background-size: contain;
+      /* "tancat": stroke extends to y=60 with horizontal stroke at y=60 */
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><line x1='50' y1='0' x2='50' y2='60' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/><line x1='40' y1='60' x2='60' y2='60' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/></svg>");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
     }
     .tile-cross {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='100' fill='%235d4037'/><rect x='0' y='40' width='100' height='20' fill='%235d4037'/></svg>");
@@ -309,7 +307,7 @@
         <button id="confirm-tile-btn" class="btn">Confirma peça</button>
       </div>
       <div id="move-controls">
-        <button id="skip-move-btn" class="btn">Omitir exploració</button>
+        <button id="skip-move-btn" class="btn">Ometre moviment</button>
       </div>
     </div>
     <!-- Center Panel: Message and Board -->
@@ -369,7 +367,7 @@
                 </div>
               </td>
             </tr>
-            <!-- Similar structure for other tile types -->
+            <!-- Similar structure for the remaining tile types (Curva, Bifurcació, Recta, Tancat) -->
             <tr>
               <td>Curva</td>
               <td class="preview-cell"><div class="tile tile-curve" style="width:50px;height:50px;"></div></td>
@@ -533,7 +531,7 @@
   </div>
 
   <script>
-    // Propagation functions using closest() to reliably obtain the TD.
+    // Propagation functions using closest() and proper row indices
     function propagateLeft(btn) {
       let td = btn.closest("td");
       let input = td.querySelector("input");
@@ -567,9 +565,9 @@
       let input = td.querySelector("input");
       let value = input.value;
       let tr = td.closest("tr");
-      let table = tr.closest("tbody") || tr.closest("table");
-      let rows = Array.from(table.rows);
-      let currentRowIndex = tr.rowIndex;
+      let tbody = tr.closest("tbody");
+      let rows = Array.from(tbody.rows);
+      let currentRowIndex = tr.sectionRowIndex;
       rows.forEach((row, index) => {
         if (index < currentRowIndex) {
           let cell = row.cells[td.cellIndex];
@@ -585,9 +583,9 @@
       let input = td.querySelector("input");
       let value = input.value;
       let tr = td.closest("tr");
-      let table = tr.closest("tbody") || tr.closest("table");
-      let rows = Array.from(table.rows);
-      let currentRowIndex = tr.rowIndex;
+      let tbody = tr.closest("tbody");
+      let rows = Array.from(tbody.rows);
+      let currentRowIndex = tr.sectionRowIndex;
       rows.forEach((row, index) => {
         if (index > currentRowIndex) {
           let cell = row.cells[td.cellIndex];
@@ -598,8 +596,7 @@
         }
       });
     }
-
-    // Main game code
+    
     window.onload = function() {
       // Mapping of internal tile types to Catalan names
       const tileNamesCat = {
@@ -940,13 +937,15 @@
           if (this.activeTile) {
             if (!this.anyRotationValid()) {
               document.getElementById("confirm-tile-btn").disabled = true;
-              document.getElementById("tile-preview").style.border = "2px solid red";
+              // Apply red border to the container
+              document.getElementById("tile-preview-container").style.border = "2px solid red";
               document.getElementById("move-controls").style.display = "flex";
               document.getElementById("tile-controls").style.display = "none";
-              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". La peça " + tileNamesCat[this.activeTile.type] + " no es pot col·locar en cap orientació. Prem 'Omitir exploració' per retornar-la.");
+              this.setMessage("Torn de " + this.getCurrentPlayer().name + ". La peça " + tileNamesCat[this.activeTile.type] + " no es pot col·locar en cap orientació. Prem 'Ometre moviment' per retornar-la.");
             } else {
               document.getElementById("confirm-tile-btn").disabled = false;
-              document.getElementById("tile-preview").style.border = "none";
+              // Restore normal border
+              document.getElementById("tile-preview-container").style.border = "2px dashed #8d6e63";
             }
           }
         }
@@ -956,11 +955,11 @@
             this.updateTilePreview();
             if (!this.isActiveTilePlaceable()) {
               document.getElementById("confirm-tile-btn").disabled = true;
-              document.getElementById("tile-preview").style.border = "2px solid red";
+              document.getElementById("tile-preview-container").style.border = "2px solid red";
               this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça " + tileNamesCat[this.activeTile.type] + " amb aquesta orientació no és vàlida.");
             } else {
               document.getElementById("confirm-tile-btn").disabled = false;
-              document.getElementById("tile-preview").style.border = "none";
+              document.getElementById("tile-preview-container").style.border = "2px dashed #8d6e63";
               this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça " + tileNamesCat[this.activeTile.type] + " obtinguda. Pots girar-la i confirmar-la.");
             }
           }
@@ -1023,7 +1022,7 @@
             this.validCells = this.getMovableCells();
             document.getElementById("tile-controls").style.display = "none";
             document.getElementById("move-controls").style.display = "flex";
-            this.setMessage("No hi ha caselles disponibles per col·locar la peça. Prem 'Omitir exploració' per continuar.");
+            this.setMessage("No hi ha caselles disponibles per col·locar la peça. Prem 'Ometre moviment' per continuar.");
             this.logEvent("Jugador " + this.getCurrentPlayer().name + ": no hi ha caselles per col·locar la peça");
             this.renderBoard();
             return;
