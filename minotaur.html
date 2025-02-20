@@ -37,7 +37,7 @@
       to { transform: rotate(360deg); }
     }
     /* =================== Left Panel: Controls =================== */
-    /* Always visible; buttons do nothing until the game is started */
+    /* Always visible; buttons are inactive until a game starts */
     #control-panel {
       width: 300px;
       padding: 15px;
@@ -132,8 +132,8 @@
     .cell.highlight {
       background: #c8e6c9;
     }
-    /* Player markers: always rendered as a 24px colored circle.
-       The active player's marker gets the additional "active-marker" class. */
+    /* Player markers: always render as a 24px circle (base marker) so each player's color is visible.
+       The active player's marker gets an extra glow using the active-marker class. */
     .player {
       position: absolute;
       width: 24px;
@@ -757,7 +757,7 @@
         this.initBoard();
         this.initSpecialTiles();
         this.initPlayers();
-        // Immediately render board and update turn info so the markers show
+        // Immediately render board and update turn info so player markers are visible
         this.renderBoard();
         this.updateTurnInfo();
         this.logEvent("Inici del joc");
@@ -809,11 +809,11 @@
             const cell = this.getCell(x, y);
             const cellDiv = document.createElement("div");
             cellDiv.classList.add("cell");
-            // Always show the player's marker if present.
+            // Always show player's marker if present.
             if (cell.player) {
               const playerDiv = document.createElement("div");
               playerDiv.classList.add("player", cell.player.cssClass);
-              // Add active-marker class if this cell belongs to the active player.
+              // Add active-marker class if this cell belongs to the current player.
               if (cell.player.name === currentPlayer.name) {
                 playerDiv.classList.add("active-marker");
               }
@@ -1130,14 +1130,18 @@
         this.phase = "choose";
         this.activeTile = null;
         this.validCells = [];
-        // Update turn info and immediately re-render the board so the new active player's marker appears.
+        // Immediately update turn info and re-render the board so the new active player's marker is visible.
         this.updateTurnInfo();
         this.renderBoard();
         this.showChoice();
       }
       showChoice() {
+        // Enable the choice panel buttons and clear previous state.
         document.getElementById("tile-controls").style.display = "none";
         document.getElementById("move-controls").style.display = "none";
+        // Ensure both buttons are enabled for the new turn.
+        document.getElementById("explore-btn").disabled = false;
+        document.getElementById("move-btn").disabled = false;
         const current = this.getCurrentPlayerCell();
         const freeAdjacent = this.getAdjacentCoords(current.x, current.y).filter(coord => {
           let cell = this.getCell(coord.x, coord.y);
@@ -1159,6 +1163,9 @@
         }
       }
       exploreTurn() {
+        // Disable choice buttons so the user cannot click them again.
+        document.getElementById("explore-btn").disabled = true;
+        document.getElementById("move-btn").disabled = true;
         document.getElementById("choice-controls").style.display = "none";
         this.phase = "rotate";
         this.activeTile = this.drawTile();
@@ -1168,11 +1175,15 @@
         }
         document.getElementById("tile-controls").style.display = "flex";
         document.getElementById("move-controls").style.display = "none";
+        // Always update tile feedback immediately after drawing.
         this.updateTileFeedback();
         this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Pots girar-la i confirmar-la.");
         document.getElementById("confirm-tile-btn").disabled = !this.isActiveTilePlaceable();
       }
       moveTurn() {
+        // Disable choice buttons on move action.
+        document.getElementById("explore-btn").disabled = true;
+        document.getElementById("move-btn").disabled = true;
         document.getElementById("choice-controls").style.display = "none";
         const moveCells = this.getMovableCells();
         if (moveCells.length === 0) {
@@ -1249,6 +1260,7 @@
           this.startTurn(); 
         }, 500);
       }
+      // Always update tile preview and then validate its orientation.
       updateTileFeedback() {
         this.updateTilePreview();
         this.validateActiveTile();
