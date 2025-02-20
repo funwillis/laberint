@@ -132,9 +132,25 @@
     .cell.highlight {
       background: #c8e6c9;
     }
-    /* Instead of shifting the entire cell, we now apply the active glow only to the player's marker */
+    /* Player markers: always rendered as a 24px colored circle.
+       The active player's marker gets the additional "active-marker" class. */
+    .player {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 2px solid #fff;
+      box-shadow: 0 0 8px rgba(0,0,0,0.5);
+      z-index: 15;
+    }
+    .player.player1 { background: #2196F3; }
+    .player.player2 { background: #4CAF50; }
+    .player.player3 { background: #FF9800; }
     .active-marker {
-      box-shadow: 0 0 10px 4px gold;
+      box-shadow: 0 0 12px 4px gold;
       transform: translate(-50%, -50%) scale(1.2);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
@@ -192,28 +208,6 @@
       background-color: #ce93d8;
       border: 2px solid #8e24aa;
       border-radius: 4px;
-    }
-    /* =================== Player Marker =================== */
-    .player {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      border: 2px solid #fff;
-      box-shadow: 0 0 8px rgba(0,0,0,0.5);
-      z-index: 15;
-    }
-    .player.player1 { background: #2196F3; }
-    .player.player2 { background: #4CAF50; }
-    .player.player3 { background: #FF9800; }
-    /* The active marker gets an extra glow (active-marker class is added in renderBoard) */
-    .active-marker {
-      box-shadow: 0 0 10px 4px gold;
-      transform: translate(-50%, -50%) scale(1.2);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     /* =================== Control Panel Groups =================== */
     #choice-controls, #tile-controls, #move-controls {
@@ -763,6 +757,7 @@
         this.initBoard();
         this.initSpecialTiles();
         this.initPlayers();
+        // Immediately render board and update turn info so the markers show
         this.renderBoard();
         this.updateTurnInfo();
         this.logEvent("Inici del joc");
@@ -814,10 +809,11 @@
             const cell = this.getCell(x, y);
             const cellDiv = document.createElement("div");
             cellDiv.classList.add("cell");
+            // Always show the player's marker if present.
             if (cell.player) {
-              let playerDiv = document.createElement("div");
-              playerDiv.classList.add("player");
-              // Add the player's specific color based on their CSS class (defined in CSS)
+              const playerDiv = document.createElement("div");
+              playerDiv.classList.add("player", cell.player.cssClass);
+              // Add active-marker class if this cell belongs to the active player.
               if (cell.player.name === currentPlayer.name) {
                 playerDiv.classList.add("active-marker");
               }
@@ -1055,7 +1051,7 @@
         }
         return false;
       }
-      // New helper: updateTileFeedback – always update the preview and then validate it.
+      // Always update tile preview and then validate its orientation.
       updateTileFeedback() {
         this.updateTilePreview();
         this.validateActiveTile();
@@ -1134,7 +1130,9 @@
         this.phase = "choose";
         this.activeTile = null;
         this.validCells = [];
+        // Update turn info and immediately re-render the board so the new active player's marker appears.
         this.updateTurnInfo();
+        this.renderBoard();
         this.showChoice();
       }
       showChoice() {
@@ -1251,7 +1249,6 @@
           this.startTurn(); 
         }, 500);
       }
-      // New helper that updates the tile preview and then validates it.
       updateTileFeedback() {
         this.updateTilePreview();
         this.validateActiveTile();
