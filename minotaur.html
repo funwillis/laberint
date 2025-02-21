@@ -37,7 +37,6 @@
       to { transform: rotate(360deg); }
     }
     /* =================== Left Panel: Controls =================== */
-    /* Always visible; buttons are inactive until a game starts */
     #control-panel {
       width: 300px;
       padding: 15px;
@@ -59,7 +58,6 @@
     #turn-info {
       margin-bottom: 10px;
     }
-    /* Turn info style with a subtle gold border */
     #turn-info p {
       background: linear-gradient(45deg, rgba(255,215,0,0.3), rgba(255,215,0,0.1));
       padding: 5px 10px;
@@ -91,6 +89,21 @@
       cursor: not-allowed;
     }
     #choice-controls button:hover:not(:disabled) {
+      background: #6d4c41;
+    }
+    #finalize-btn {
+      margin: 5px;
+      padding: 10px 15px;
+      background: #8d6e63;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s ease;
+      display: none;
+    }
+    #finalize-btn:hover {
       background: #6d4c41;
     }
     /* =================== Center Panel: Message and Board =================== */
@@ -132,8 +145,7 @@
     .cell.highlight {
       background: #c8e6c9;
     }
-    /* Player markers: always render as a 24px circle (base marker) so each player's color is visible.
-       The active player's marker gets an extra glow using the active-marker class. */
+    /* =================== Player Markers =================== */
     .player {
       position: absolute;
       width: 24px;
@@ -370,6 +382,7 @@
       <div id="choice-controls">
         <button id="explore-btn" class="btn">Explorar</button>
         <button id="move-btn" class="btn">Moure</button>
+        <button id="finalize-btn" class="btn" style="display:none;">Finalitzar torn</button>
       </div>
       <!-- Tile (explore) controls -->
       <div id="tile-controls">
@@ -608,7 +621,7 @@
   </div>
   
   <script>
-    // Declare global variable so it's accessible everywhere.
+    // Global variable
     var game = null;
     
     // Global propagation functions
@@ -754,10 +767,12 @@
         this.validCells = [];
         this.activeTile = null;
         this.events = [];
+        // Flags to track if actions have been taken in this turn.
+        this.hasExplored = false;
+        this.hasMoved = false;
         this.initBoard();
         this.initSpecialTiles();
         this.initPlayers();
-        // Immediately render board and update turn info so player markers are visible
         this.renderBoard();
         this.updateTurnInfo();
         this.logEvent("Inici del joc");
@@ -809,11 +824,9 @@
             const cell = this.getCell(x, y);
             const cellDiv = document.createElement("div");
             cellDiv.classList.add("cell");
-            // Always show player's marker if present.
             if (cell.player) {
               const playerDiv = document.createElement("div");
               playerDiv.classList.add("player", cell.player.cssClass);
-              // Add active-marker class if this cell belongs to the current player.
               if (cell.player.name === currentPlayer.name) {
                 playerDiv.classList.add("active-marker");
               }
@@ -1051,18 +1064,21 @@
         }
         return false;
       }
-      // Always update tile preview and then validate its orientation.
       updateTileFeedback() {
-        this.updateTilePreview();
-        this.validateActiveTile();
+        // Force an immediate update (using setTimeout(0) to let the DOM update)
+        setTimeout(() => {
+          this.updateTilePreview();
+          this.validateActiveTile();
+        }, 0);
       }
       validateActiveTile() {
         if (this.activeTile) {
           if (!this.anyRotationValid()) {
-            document.getElementById("confirm-tile-btn").disabled = true;
+            document.getElementById("confirm-tile-btn").disabled = false;
+            document.getElementById("confirm-tile-btn").innerText = "Atrás";
             document.getElementById("tile-preview-container").classList.add("invalid");
-            this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Orientació no és vàlida: la peça " + tileNamesCat[this.activeTile.type] + " no es pot col·locar. Prem 'Ometre moviment' per retornar-la.");
           } else {
+            document.getElementById("confirm-tile-btn").innerText = "Confirma peça";
             document.getElementById("confirm-tile-btn").disabled = false;
             document.getElementById("tile-preview-container").classList.remove("invalid");
           }
@@ -1073,10 +1089,12 @@
           this.activeTile.rotate();
           this.updateTileFeedback();
           if (!this.isActiveTilePlaceable()) {
-            document.getElementById("confirm-tile-btn").disabled = true;
+            document.getElementById("confirm-tile-btn").innerText = "Atrás";
+            document.getElementById("confirm-tile-btn").disabled = false;
             document.getElementById("tile-preview-container").classList.add("invalid");
             this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Orientació no és vàlida: la peça " + tileNamesCat[this.activeTile.type] + " amb aquesta orientació no és vàlida.");
           } else {
+            document.getElementById("confirm-tile-btn").innerText = "Confirma peça";
             document.getElementById("confirm-tile-btn").disabled = false;
             document.getElementById("tile-preview-container").classList.remove("invalid");
             this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça " + tileNamesCat[this.activeTile.type] + " obtinguda. Pots girar-la i confirmar-la.");
@@ -1130,40 +1148,49 @@
         this.phase = "choose";
         this.activeTile = null;
         this.validCells = [];
-        // Immediately update turn info and re-render the board so the new active player's marker is visible.
+        this.hasExplored = false;
+        this.hasMoved = false;
         this.updateTurnInfo();
         this.renderBoard();
         this.showChoice();
       }
-      showChoice() {
-        // Enable the choice panel buttons and clear previous state.
-        document.getElementById("tile-controls").style.display = "none";
-        document.getElementById("move-controls").style.display = "none";
-        // Ensure both buttons are enabled for the new turn.
-        document.getElementById("explore-btn").disabled = false;
-        document.getElementById("move-btn").disabled = false;
+      updateChoiceControls() {
+        const exploreBtn = document.getElementById("explore-btn");
+        const moveBtn = document.getElementById("move-btn");
+        const finalizeBtn = document.getElementById("finalize-btn");
+        document.getElementById("choice-controls").style.display = "flex";
         const current = this.getCurrentPlayerCell();
         const freeAdjacent = this.getAdjacentCoords(current.x, current.y).filter(coord => {
           let cell = this.getCell(coord.x, coord.y);
           return cell && !cell.tile;
         });
         const moveAvailable = this.getMovableCells().length > 0;
-        document.getElementById("explore-btn").disabled = (freeAdjacent.length === 0);
-        document.getElementById("move-btn").disabled = (!moveAvailable);
-        document.getElementById("choice-controls").style.display = "flex";
-        if (freeAdjacent.length === 0 && moveAvailable) {
-          this.setMessage("No pots explorar. Pots moure't.");
-        } else if (!moveAvailable && freeAdjacent.length > 0) {
-          this.setMessage("No pots moure't. Pots explorar.");
-        } else if (freeAdjacent.length === 0 && !moveAvailable) {
-          this.setMessage("No pots explorar ni moure't. Fi de torn.");
-          setTimeout(() => this.endTurn(), 500);
+        let canExplore = (freeAdjacent.length > 0) && (!this.hasExplored);
+        let canMove = (moveAvailable) && (!this.hasMoved);
+        // Hide the move button if move has already been done.
+        if (!canMove) { moveBtn.style.display = "none"; } else { moveBtn.style.display = "inline-block"; }
+        // Similarly, hide explore button if already explored.
+        if (!canExplore) { exploreBtn.style.display = "none"; } else { exploreBtn.style.display = "inline-block"; }
+        exploreBtn.disabled = !canExplore;
+        moveBtn.disabled = !canMove;
+        if (!canExplore && !canMove) {
+          exploreBtn.style.display = "none";
+          moveBtn.style.display = "none";
+          finalizeBtn.style.display = "block";
+          this.setMessage("No hi ha accions disponibles. Prem 'Finalitzar torn' per acabar.");
         } else {
+          finalizeBtn.style.display = "none";
           this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Escull: Explorar o Moure.");
         }
       }
+      showChoice() {
+        document.getElementById("tile-controls").style.display = "none";
+        document.getElementById("move-controls").style.display = "none";
+        // Re-enable and update the choice controls.
+        this.updateChoiceControls();
+      }
       exploreTurn() {
-        // Disable choice buttons so the user cannot click them again.
+        this.hasExplored = true;
         document.getElementById("explore-btn").disabled = true;
         document.getElementById("move-btn").disabled = true;
         document.getElementById("choice-controls").style.display = "none";
@@ -1175,13 +1202,13 @@
         }
         document.getElementById("tile-controls").style.display = "flex";
         document.getElementById("move-controls").style.display = "none";
-        // Always update tile feedback immediately after drawing.
-        this.updateTileFeedback();
+        // Force updateTileFeedback immediately after drawing.
+        setTimeout(() => { this.updateTileFeedback(); }, 0);
         this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Pots girar-la i confirmar-la.");
         document.getElementById("confirm-tile-btn").disabled = !this.isActiveTilePlaceable();
       }
       moveTurn() {
-        // Disable choice buttons on move action.
+        this.hasMoved = true;
         document.getElementById("explore-btn").disabled = true;
         document.getElementById("move-btn").disabled = true;
         document.getElementById("choice-controls").style.display = "none";
@@ -1200,20 +1227,34 @@
       }
       confirmTile() {
         if (this.activeTile && this.phase === "rotate") {
-          if (!this.isActiveTilePlaceable()) {
-            this.setMessage("La peça no es pot col·locar en cap casella.");
-            return;
-          }
-          this.phase = "place";
-          this.validCells = this.getExplorableCells();
-          if (this.validCells.length === 0) {
-            this.setMessage("No hi ha caselles vàlides per col·locar la peça. Fi de torn.");
-            this.endTurn();
+          let btn = document.getElementById("confirm-tile-btn");
+          if (btn.innerText === "Atrás") {
+            let tileType = this.activeTile.type;
+            let currentPlayer = this.getCurrentPlayer();
+            currentPlayer.pool[tileType]++;
+            this.logEvent("Jugador " + currentPlayer.name + ": retorna peça " + tileNamesCat[tileType] + " per no ser vàlida");
+            this.activeTile = null;
+            this.phase = "move";
+            this.validCells = this.getMovableCells();
+            document.getElementById("tile-controls").style.display = "none";
+            document.getElementById("move-controls").style.display = "flex";
+            this.renderBoard();
           } else {
-            this.setMessage("Explora: tria una casella adjacent per col·locar la peça.");
+            if (!this.isActiveTilePlaceable()) {
+              this.setMessage("La peça no es pot col·locar en cap casella.");
+              return;
+            }
+            this.phase = "place";
+            this.validCells = this.getExplorableCells();
+            if (this.validCells.length === 0) {
+              this.setMessage("No hi ha caselles vàlides per col·locar la peça. Fi de torn.");
+              this.endTurn();
+            } else {
+              this.setMessage("Explora: tria una casella adjacent per col·locar la peça.");
+            }
+            document.getElementById("tile-controls").style.display = "none";
+            this.renderBoard();
           }
-          document.getElementById("tile-controls").style.display = "none";
-          this.renderBoard();
         }
       }
       handleCellClick(x, y) {
@@ -1260,10 +1301,11 @@
           this.startTurn(); 
         }, 500);
       }
-      // Always update tile preview and then validate its orientation.
       updateTileFeedback() {
-        this.updateTilePreview();
-        this.validateActiveTile();
+        setTimeout(() => { 
+          this.updateTilePreview();
+          this.validateActiveTile();
+        }, 0);
       }
     }
     
@@ -1350,7 +1392,6 @@
         }
       });
       
-      // Attach event listeners for the choice panel buttons.
       document.getElementById("explore-btn").addEventListener("click", () => {
         if (document.getElementById("explore-btn").disabled) {
           game.setMessage("No pots explorar en aquesta situació.");
@@ -1364,6 +1405,9 @@
         } else {
           game.moveTurn();
         }
+      });
+      document.getElementById("finalize-btn").addEventListener("click", () => {
+        game.endTurn();
       });
     };
   </script>
