@@ -154,17 +154,23 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      background: #2196F3; /* uniform blue */
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       border: 2px solid #fff;
       box-shadow: 0 0 8px rgba(0,0,0,0.5);
       z-index: 15;
     }
-    .player.player1 { background: #2196F3; }
-    .player.player2 { background: #4CAF50; }
-    .player.player3 { background: #FF9800; }
+    /* Active marker glow changed to olive green (#556B2F) */
     .active-marker {
-      box-shadow: 0 0 12px 4px gold;
-      transform: translate(-50%, -50%) scale(1.2);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 0 12px 4px #556B2F;
+      transform: translate(-50%, -50%) scale(1.3);
+      border-color: #556B2F;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     }
     .cell-coord {
       position: absolute;
@@ -183,27 +189,9 @@
       display: block;
       margin: auto;
     }
-    .tile-deadend {
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><line x1='50' y1='0' x2='50' y2='60' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/><line x1='40' y1='60' x2='60' y2='60' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/></svg>");
-      background-size: 100% 100%;
-      background-repeat: no-repeat;
-    }
-    .tile-cross {
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='100' fill='%235d4037'/><rect x='0' y='40' width='100' height='20' fill='%235d4037'/></svg>");
-    }
-    .tile-straight {
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='100' fill='%235d4037'/></svg>");
-    }
-    .tile-t {
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='60' fill='%235d4037'/><rect x='0' y='40' width='100' height='20' fill='%235d4037'/></svg>");
-    }
-    .tile-curve {
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='50' fill='%235d4037'/><rect x='50' y='40' width='50' height='20' fill='%235d4037'/></svg>");
-    }
-    /* =================== Special Tiles =================== */
     .tile-entrance {
-      background-color: #a5d6a7;
-      border: 2px solid #388e3c;
+      background-color: #d2b48c;
+      border: 2px solid #8b4513;
       border-radius: 4px;
     }
     .tile-exit {
@@ -220,6 +208,23 @@
       background-color: #ce93d8;
       border: 2px solid #8e24aa;
       border-radius: 4px;
+    }
+    .tile-deadend {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><line x1='50' y1='0' x2='50' y2='60' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/><line x1='40' y1='60' x2='60' y2='60' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/></svg>");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+    }
+    .tile-cross {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='100' fill='%235d4037'/><rect x='0' y='40' width='100' height='20' fill='%235d4037'/></svg>");
+    }
+    .tile-straight {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='100' fill='%235d4037'/></svg>");
+    }
+    .tile-t {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='60' fill='%235d4037'/><rect x='0' y='40' width='100' height='20' fill='%235d4037'/></svg>");
+    }
+    .tile-curve {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='50' fill='%235d4037'/><rect x='50' y='40' width='50' height='20' fill='%235d4037'/></svg>");
     }
     /* =================== Control Panel Groups =================== */
     #choice-controls, #tile-controls, #move-controls {
@@ -436,7 +441,10 @@
           <div id="invalid-overlay">!</div>
         </div>
         <button id="rotate-btn" class="btn">Gira 90º</button>
-        <button id="confirm-tile-btn" class="btn">Confirma peça</button>
+        <!-- confirm-tile-btn is hidden (confirmation is by board click) -->
+        <button id="confirm-tile-btn" class="btn" style="display:none;">Confirma peça</button>
+        <!-- Tile-back button appears if no rotation is valid -->
+        <button id="tile-back-btn" class="btn" style="display:none;">Cancelar exploració</button>
       </div>
       <!-- Move controls -->
       <div id="move-controls">
@@ -737,8 +745,8 @@
     // Global mappings and base definitions
     const playerColors = {
       player1: "#2196F3",
-      player2: "#4CAF50",
-      player3: "#FF9800"
+      player2: "#2196F3",
+      player3: "#2196F3"
     };
     const tileNamesCat = {
       cross: "creu",
@@ -870,7 +878,9 @@
             cellDiv.classList.add("cell");
             if (cell.player) {
               const playerDiv = document.createElement("div");
-              playerDiv.classList.add("player", cell.player.cssClass);
+              playerDiv.classList.add("player");
+              // Display "J1", "J2", "J3" based on player's name.
+              playerDiv.innerText = cell.player.name.replace("Jugador ", "J");
               if (cell.player.name === currentPlayer.name) {
                 playerDiv.classList.add("active-marker");
               }
@@ -1109,40 +1119,36 @@
         return false;
       }
       updateTileFeedback() {
-        // Ensure feedback is updated immediately after drawing.
-        setTimeout(() => {
-          this.updateTilePreview();
-          this.validateActiveTile();
-        }, 0);
+        // Update feedback immediately after drawing or rotation.
+        this.updateTilePreview();
+        this.validateActiveTile();
+        if (this.activeTile && this.anyRotationValid()) {
+          this.validCells = this.getExplorableCells();
+          // Set phase to "place" so board clicks confirm placement.
+          this.phase = "place";
+        } else {
+          this.phase = "rotate";
+        }
+        this.renderBoard();
       }
       validateActiveTile() {
         if (this.activeTile) {
           if (!this.anyRotationValid()) {
-            document.getElementById("confirm-tile-btn").disabled = false;
-            document.getElementById("confirm-tile-btn").innerText = "Atrás";
+            // Show red invalid overlay and show tile-back button.
             document.getElementById("tile-preview-container").classList.add("invalid");
+            document.getElementById("confirm-tile-btn").style.display = "none";
+            document.getElementById("tile-back-btn").style.display = "inline-block";
           } else {
-            document.getElementById("confirm-tile-btn").innerText = "Confirma peça";
-            document.getElementById("confirm-tile-btn").disabled = false;
             document.getElementById("tile-preview-container").classList.remove("invalid");
+            document.getElementById("confirm-tile-btn").style.display = "none"; // confirmation is by board click
+            document.getElementById("tile-back-btn").style.display = "none";
           }
         }
       }
       rotateActiveTile() {
-        if (this.activeTile && this.phase === "rotate") {
+        if (this.activeTile) {  // Removed phase check to allow rotation in "place" phase as well.
           this.activeTile.rotate();
           this.updateTileFeedback();
-          if (!this.isActiveTilePlaceable()) {
-            document.getElementById("confirm-tile-btn").innerText = "Atrás";
-            document.getElementById("confirm-tile-btn").disabled = false;
-            document.getElementById("tile-preview-container").classList.add("invalid");
-            this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Orientació no és vàlida: la peça " + tileNamesCat[this.activeTile.type] + " amb aquesta orientació no és vàlida.");
-          } else {
-            document.getElementById("confirm-tile-btn").innerText = "Confirma peça";
-            document.getElementById("confirm-tile-btn").disabled = false;
-            document.getElementById("tile-preview-container").classList.remove("invalid");
-            this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça " + tileNamesCat[this.activeTile.type] + " obtinguda. Pots girar-la i confirmar-la.");
-          }
         }
       }
       updateTilePreview() {
@@ -1243,9 +1249,8 @@
         }
         document.getElementById("tile-controls").style.display = "flex";
         document.getElementById("move-controls").style.display = "none";
-        setTimeout(() => { this.updateTileFeedback(); }, 0);
-        this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Pots girar-la i confirmar-la.");
-        document.getElementById("confirm-tile-btn").disabled = !this.isActiveTilePlaceable();
+        this.updateTileFeedback();
+        this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Pots girar-la i, si és vàlida, clicar sobre la casella destacada per col·locar-la.");
       }
       moveTurn() {
         this.hasMoved = true;
@@ -1264,38 +1269,6 @@
         document.getElementById("move-controls").style.display = "flex";
         this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Pots moure't.");
         this.renderBoard();
-      }
-      confirmTile() {
-        if (this.activeTile && this.phase === "rotate") {
-          let btn = document.getElementById("confirm-tile-btn");
-          if (btn.innerText === "Atrás") {
-            let tileType = this.activeTile.type;
-            let currentPlayer = this.getCurrentPlayer();
-            currentPlayer.pool[tileType]++;
-            this.logEvent("Jugador " + currentPlayer.name + ": retorna peça " + tileNamesCat[tileType] + " per no ser vàlida");
-            this.activeTile = null;
-            this.phase = "move";
-            this.validCells = this.getMovableCells();
-            document.getElementById("tile-controls").style.display = "none";
-            document.getElementById("move-controls").style.display = "flex";
-            this.renderBoard();
-          } else {
-            if (!this.isActiveTilePlaceable()) {
-              this.setMessage("La peça no es pot col·locar en cap casella.");
-              return;
-            }
-            this.phase = "place";
-            this.validCells = this.getExplorableCells();
-            if (this.validCells.length === 0) {
-              this.setMessage("No hi ha caselles vàlides per col·locar la peça. Fi de torn.");
-              this.endTurn();
-            } else {
-              this.setMessage("Explora: tria una casella adjacent per col·locar la peça.");
-            }
-            document.getElementById("tile-controls").style.display = "none";
-            this.renderBoard();
-          }
-        }
       }
       handleCellClick(x, y) {
         if (this.phase === "place") {
@@ -1342,10 +1315,47 @@
         }, 500);
       }
       updateTileFeedback() {
-        setTimeout(() => {
-          this.updateTilePreview();
-          this.validateActiveTile();
-        }, 0);
+        // Update feedback immediately after drawing or rotation.
+        this.updateTilePreview();
+        this.validateActiveTile();
+        if (this.activeTile && this.anyRotationValid()) {
+          this.validCells = this.getExplorableCells();
+          this.phase = "place";
+        } else {
+          this.phase = "rotate";
+        }
+        this.renderBoard();
+      }
+      anyRotationValid() {
+        let current = this.getCurrentPlayerCell();
+        let freeAdj = this.getAdjacentCoords(current.x, current.y).filter(coord => {
+          let cell = this.getCell(coord.x, coord.y);
+          return cell && !cell.tile;
+        });
+        for (let i = 0; i < 4; i++) {
+          let testTile = this.activeTile.clone();
+          for (let j = 0; j < i; j++) {
+            testTile.rotate();
+          }
+          for (let coord of freeAdj) {
+            if (current.tile.edges[coord.dir] && testTile.edges[this.getOpposite(coord.dir)]) {
+              if (testTile.type === "curve") {
+                let activeEdges = Object.keys(testTile.edges).filter(d => testTile.edges[d]);
+                let used = this.getOpposite(coord.dir);
+                let others = activeEdges.filter(d => d !== used);
+                if (others.length > 0) {
+                  let otherDir = others[0];
+                  let delta = deltas[otherDir];
+                  if (!this.getCell(coord.x + delta.dx, coord.y + delta.dy)) {
+                    continue;
+                  }
+                }
+              }
+              return true;
+            }
+          }
+        }
+        return false;
       }
     }
     
@@ -1413,7 +1423,20 @@
         game.rotateActiveTile();
       });
       document.getElementById("confirm-tile-btn").addEventListener("click", () => {
-        game.confirmTile();
+        // Not used: confirmation is by board click.
+      });
+      document.getElementById("tile-back-btn").addEventListener("click", () => {
+        let tileType = game.activeTile.type;
+        let currentPlayer = game.getCurrentPlayer();
+        currentPlayer.pool[tileType]++;
+        game.logEvent("Jugador " + currentPlayer.name + ": retorna peça " + tileNamesCat[tileType] + " per no ser vàlida");
+        game.activeTile = null;
+        game.phase = "move";
+        game.validCells = game.getMovableCells();
+        document.getElementById("tile-controls").style.display = "none";
+        document.getElementById("move-controls").style.display = "flex";
+        game.renderBoard();
+        game.hasExplored = true;
       });
       document.getElementById("skip-move-btn").addEventListener("click", () => {
         if (game.phase === "rotate" && !game.anyRotationValid()) {
