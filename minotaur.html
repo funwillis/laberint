@@ -1340,13 +1340,26 @@
         return false;
       }
       updateTileFeedback() {
+        // Update preview and check validity.
         this.updateTilePreview();
         this.validateActiveTile();
+
+        // If the active tile can be placed (in some rotation) then update valid cells and set phase to "place".
         if (this.activeTile && this.anyRotationValid()) {
           this.validCells = this.getExplorableCells();
           this.phase = "place";
         } else {
+          // Otherwise, remain in rotate phase.
           this.phase = "rotate";
+          // If still invalid after a short delay, automatically trigger the tile-back button.
+          if (this.activeTile && !this.anyRotationValid()) {
+            setTimeout(() => {
+              // Double-check the state before auto-cancelling.
+              if (this.activeTile && !this.anyRotationValid() && this.phase === "rotate") {
+                document.getElementById("tile-back-btn").click();
+              }
+            }, 1000);
+          }
         }
         this.renderBoard();
       }
@@ -1359,6 +1372,12 @@
             if (!this.anyRotationValid()) {
               previewContainer.classList.add("invalid");
               confirmBtn.style.display = "none";
+              // Set the label depending on whether the player has already moved this turn.
+              if (!this.hasMoved) {
+                backBtn.innerText = "Enrera";
+              } else {
+                backBtn.innerText = "Cancela";
+              }
               backBtn.style.display = "inline-block";
             } else {
               previewContainer.classList.remove("invalid");
@@ -1644,17 +1663,24 @@
         game.rotateActiveTile();
       });
       document.getElementById("tile-back-btn").addEventListener("click", () => {
-        let tileType = game.activeTile.type;
         let currentPlayer = game.getCurrentPlayer();
-        currentPlayer.pool[tileType]++;
-        game.logEvent("Jugador " + currentPlayer.name + ": retorna peça " + tileNamesCat[tileType] + " per no ser vàlida");
-        game.activeTile = null;
-        game.phase = "move";
-        game.validCells = game.getMovableCells();
-        document.getElementById("tile-controls").style.display = "none";
-        document.getElementById("move-controls").style.display = "flex";
-        game.renderBoard();
-        game.hasExplored = true;
+        let tileType = game.activeTile.type;
+        if (!game.hasMoved) {
+          // "Enrera": return the tile and mark as explored, forcing the player to only move this turn.
+          currentPlayer.pool[tileType]++;
+          game.logEvent("Jugador " + currentPlayer.name + ": retorna peça " + tileNamesCat[tileType] + " per no ser vàlida (Enrera)");
+          game.activeTile = null;
+          game.phase = "move";
+          game.validCells = game.getMovableCells();
+          document.getElementById("tile-controls").style.display = "none";
+          document.getElementById("move-controls").style.display = "flex";
+          game.renderBoard();
+          game.hasExplored = true;
+        } else {
+          // "Cancela": if already moved, cancel and end the turn.
+          game.logEvent("Jugador " + currentPlayer.name + ": cancela exploració i acaba torn");
+          game.endTurn();
+        }
       });
       document.getElementById("skip-move-btn").addEventListener("click", () => {
         if (game.phase === "rotate" && !game.anyRotationValid()) {
