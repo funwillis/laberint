@@ -384,7 +384,6 @@
     #config-panel {
       flex: 1;
       padding: 10px;
-      overflow-y: auto;
       border-bottom: 1px solid #8d6e63;
     }
 
@@ -569,11 +568,15 @@
     <div id="board-container">
       <div id="message"></div>
       <div id="board"></div>
+      <!-- This button will appear when the right panel is hidden -->
+      <button id="show-config-btn" class="btn">Mostra Configuració</button>
     </div>
     <!-- Right Panel: Configuration and Event Log -->
     <div id="log-panel">
       <div id="config-panel">
-        <h3>Configuració Inicial</h3>
+        <h3>Configuració Inicial
+          <button id="toggle-config-btn" class="btn">Oculta</button>
+        </h3>
         <table id="config-table">
           <thead>
             <tr>
@@ -1609,6 +1612,23 @@
       }
     }
 
+    // Function to toggle the right panel
+    function toggleConfigPanel() {
+      const logPanel = document.getElementById("log-panel");
+      const toggleBtn = document.getElementById("toggle-config-btn");
+      const showConfigBtn = document.getElementById("show-config-btn");
+      if (logPanel.style.display === "none") {
+        logPanel.style.display = "flex";
+        toggleBtn.innerText = "Oculta";
+        showConfigBtn.style.display = "none";
+      } else {
+        logPanel.style.display = "none";
+        toggleBtn.innerText = "Mostra";
+        // Also show the button in the center panel to bring the config panel back
+        showConfigBtn.style.display = "inline-block";
+      }
+    }
+
     // Configuration functions
     function readConfiguration() {
       const inputs = document.querySelectorAll("#config-table input");
@@ -1726,6 +1746,11 @@
       document.getElementById("finalize-btn").addEventListener("click", () => {
         game.endTurn();
       });
+      // Attach the toggle event for the configuration panel button in the right panel.
+      document.getElementById("toggle-config-btn").addEventListener("click", toggleConfigPanel);
+
+      // Attach event for the "show-config-btn" (in center panel) to show the config panel.
+      document.getElementById("show-config-btn").addEventListener("click", toggleConfigPanel);
     };
   </script>
 </body>
