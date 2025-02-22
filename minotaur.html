@@ -371,6 +371,50 @@
       transition: background 0.3s ease;
     }
     .btn:hover { background: #6d4c41; }
+    
+    /* =================== Mobile Responsive Styles =================== */
+    @media only screen and (max-width: 768px) {
+      #game-container {
+        flex-direction: column;
+        height: auto;
+        padding: 5px;
+      }
+      #control-panel, #board-container, #log-panel {
+        width: 100%;
+        margin: 5px 0;
+      }
+      #board {
+        grid-template-columns: repeat(12, 30px);
+        grid-template-rows: repeat(12, 30px);
+        gap: 1px;
+        padding: 5px;
+        border-width: 2px;
+      }
+      .cell {
+        width: 30px;
+        height: 30px;
+      }
+      .player {
+        width: 18px;
+        height: 18px;
+        border-width: 1px;
+      }
+      #turn-info p {
+        font-size: 14px;
+        padding: 4px 8px;
+      }
+      #message {
+        font-size: 16px;
+      }
+      .btn {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+      #tile-preview-container {
+        width: 40px;
+        height: 40px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -621,7 +665,7 @@
   </div>
   
   <script>
-    // Global variable
+    // Declare global variable
     var game = null;
     
     // Global propagation functions
@@ -767,7 +811,7 @@
         this.validCells = [];
         this.activeTile = null;
         this.events = [];
-        // Flags to track if actions have been taken in this turn.
+        // Flags for actions in the current turn.
         this.hasExplored = false;
         this.hasMoved = false;
         this.initBoard();
@@ -1065,7 +1109,7 @@
         return false;
       }
       updateTileFeedback() {
-        // Force an immediate update (using setTimeout(0) to let the DOM update)
+        // Ensure feedback is updated immediately after drawing.
         setTimeout(() => {
           this.updateTilePreview();
           this.validateActiveTile();
@@ -1167,9 +1211,7 @@
         const moveAvailable = this.getMovableCells().length > 0;
         let canExplore = (freeAdjacent.length > 0) && (!this.hasExplored);
         let canMove = (moveAvailable) && (!this.hasMoved);
-        // Hide the move button if move has already been done.
         if (!canMove) { moveBtn.style.display = "none"; } else { moveBtn.style.display = "inline-block"; }
-        // Similarly, hide explore button if already explored.
         if (!canExplore) { exploreBtn.style.display = "none"; } else { exploreBtn.style.display = "inline-block"; }
         exploreBtn.disabled = !canExplore;
         moveBtn.disabled = !canMove;
@@ -1186,7 +1228,6 @@
       showChoice() {
         document.getElementById("tile-controls").style.display = "none";
         document.getElementById("move-controls").style.display = "none";
-        // Re-enable and update the choice controls.
         this.updateChoiceControls();
       }
       exploreTurn() {
@@ -1202,7 +1243,6 @@
         }
         document.getElementById("tile-controls").style.display = "flex";
         document.getElementById("move-controls").style.display = "none";
-        // Force updateTileFeedback immediately after drawing.
         setTimeout(() => { this.updateTileFeedback(); }, 0);
         this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Pots girar-la i confirmar-la.");
         document.getElementById("confirm-tile-btn").disabled = !this.isActiveTilePlaceable();
@@ -1302,7 +1342,7 @@
         }, 500);
       }
       updateTileFeedback() {
-        setTimeout(() => { 
+        setTimeout(() => {
           this.updateTilePreview();
           this.validateActiveTile();
         }, 0);
