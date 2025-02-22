@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Labyrinth - Tile Game</title>
@@ -14,6 +15,7 @@
       background: linear-gradient(135deg, #fdfcfb, #e2d1c3);
       color: #3e2723;
     }
+
     /* =================== Layout: 3 Columns =================== */
     #game-container {
       display: flex;
@@ -21,6 +23,7 @@
       box-sizing: border-box;
       padding: 5px;
     }
+
     /* =================== Spinner Style =================== */
     #spinner {
       display: none;
@@ -32,40 +35,53 @@
       animation: spin 0.8s linear infinite;
       margin-bottom: 10px;
     }
+
     @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
     }
+
     /* =================== Left Panel: Controls =================== */
     #control-panel {
       width: 300px;
       padding: 15px;
       background: #f8f1e4;
       border-right: 4px solid #8d6e63;
-      box-shadow: 4px 0 10px rgba(0,0,0,0.3);
+      box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
     }
-    #control-panel h2, #control-panel h3 {
+
+    #control-panel h2,
+    #control-panel h3 {
       color: #5d4037;
       margin: 5px 0;
     }
+
     #control-panel h2 {
       font-size: 24px;
     }
+
     #turn-info {
       margin-bottom: 10px;
     }
+
     #turn-info p {
-      background: linear-gradient(45deg, rgba(255,215,0,0.3), rgba(255,215,0,0.1));
+      background: linear-gradient(45deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.1));
       padding: 5px 10px;
       border-radius: 8px;
       font-weight: bold;
       text-align: center;
       border: 1px solid gold;
     }
+
     /* =================== Choice Panel =================== */
     #choice-controls {
       display: none;
@@ -73,6 +89,7 @@
       align-items: center;
       margin-bottom: 10px;
     }
+
     #choice-controls button {
       margin: 5px;
       padding: 10px 15px;
@@ -84,13 +101,16 @@
       font-size: 16px;
       transition: background 0.3s ease;
     }
+
     #choice-controls button:disabled {
       background: #ccc;
       cursor: not-allowed;
     }
+
     #choice-controls button:hover:not(:disabled) {
       background: #6d4c41;
     }
+
     #finalize-btn {
       margin: 5px;
       padding: 10px 15px;
@@ -103,9 +123,11 @@
       transition: background 0.3s ease;
       display: none;
     }
+
     #finalize-btn:hover {
       background: #6d4c41;
     }
+
     /* =================== Center Panel: Message and Board =================== */
     #board-container {
       flex: 1;
@@ -115,6 +137,7 @@
       justify-content: center;
       padding: 10px;
     }
+
     #message {
       margin-bottom: 15px;
       text-align: center;
@@ -122,6 +145,7 @@
       font-size: 18px;
       min-height: 40px;
     }
+
     #board {
       display: grid;
       grid-template-columns: repeat(12, 50px);
@@ -130,9 +154,10 @@
       background: #333;
       padding: 10px;
       border: 4px solid #8d6e63;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
       position: relative;
     }
+
     .cell {
       width: 50px;
       height: 50px;
@@ -142,13 +167,16 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
-    /* Only apply overlays to cells without a tile (i.e. not special cells) */
-    .cell.highlight {
-      background: #c8e6c9;
+
+    /* Dynamic overlays for valid/invalid cells (applied only in active phases) */
+    .overlay.valid {
+      background: rgba(144, 238, 144, 0.8);
     }
-    .cell.invalid-highlight {
-      background: #ffb6c1;
+
+    .overlay.invalid {
+      background: rgba(255, 182, 193, 0.8);
     }
+
     /* =================== Player Markers =================== */
     .player {
       position: absolute;
@@ -166,24 +194,26 @@
       align-items: center;
       justify-content: center;
       border: 2px solid #fff;
-      box-shadow: 0 0 8px rgba(0,0,0,0.5);
-      z-index: 15;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+      z-index: 4;
     }
-    /* Active marker: now with a lighter green glow */
+
     .active-marker {
       box-shadow: 0 0 12px 4px #90ee90;
       transform: translate(-50%, -50%) scale(1.3);
       border-color: #90ee90;
       transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     }
+
     .cell-coord {
       position: absolute;
       top: 2px;
       left: 2px;
       font-size: 10px;
       color: #666;
-      z-index: 10;
+      z-index: 0;
     }
+
     /* =================== Tile Visuals =================== */
     .tile {
       width: 100%;
@@ -192,37 +222,92 @@
       background-repeat: no-repeat;
       display: block;
       margin: auto;
+      position: relative;
+      z-index: 2;
     }
-    /* For special cells, we preserve a fixed overlay (using our previous colors) */
-    .tile-entrance { background-color: #d2b48c; border: 2px solid #8b4513; border-radius: 4px; }
-    .tile-exit { background-color: #ef9a9a; border: 2px solid #d32f2f; border-radius: 4px; }
-    .tile-treasure { background-color: #ffe082; border: 2px solid #fbc02d; border-radius: 4px; }
-    .tile-minotaur { background-color: #ce93d8; border: 2px solid #8e24aa; border-radius: 4px; }
+
+    /* Fixed special overlays for special cells (treasure, minotaur, corner)
+       These now have z-index 1 so they appear below the tile SVG */
+    .special-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .special-overlay.treasure {
+      background: rgba(255, 224, 130, 0.8);
+    }
+
+    .special-overlay.minotaur {
+      background: rgba(206, 147, 216, 0.8);
+    }
+
+    .special-overlay.corner {
+      background: rgba(210, 180, 140, 0.8);
+    }
+
+    /* =================== Fixed Tile Backgrounds =================== */
+    .tile-entrance {
+      background-color: #d2b48c;
+      border: 2px solid #8b4513;
+      border-radius: 4px;
+    }
+
+    .tile-exit {
+      background-color: #ef9a9a;
+      border: 2px solid #d32f2f;
+      border-radius: 4px;
+    }
+
+    .tile-treasure {
+      background-color: #ffe082;
+      border: 2px solid #fbc02d;
+      border-radius: 4px;
+    }
+
+    .tile-minotaur {
+      background-color: #ce93d8;
+      border: 2px solid #8e24aa;
+      border-radius: 4px;
+    }
+
+    /* Deadend remains as before */
     .tile-deadend {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><line x1='50' y1='0' x2='50' y2='60' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/><line x1='40' y1='60' x2='60' y2='60' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/></svg>");
       background-size: 100% 100%;
       background-repeat: no-repeat;
     }
+
     .tile-cross {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='100' fill='%235d4037'/><rect x='0' y='40' width='100' height='20' fill='%235d4037'/></svg>");
     }
+
     .tile-straight {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='100' fill='%235d4037'/></svg>");
     }
+
     .tile-t {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='60' fill='%235d4037'/><rect x='0' y='40' width='100' height='20' fill='%235d4037'/></svg>");
     }
+
     .tile-curve {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='0' width='20' height='50' fill='%235d4037'/><rect x='50' y='40' width='50' height='20' fill='%235d4037'/></svg>");
     }
+
     /* =================== Control Panel Groups =================== */
-    #choice-controls, #tile-controls, #move-controls {
+    #choice-controls,
+    #tile-controls,
+    #move-controls {
       width: 100%;
       margin-top: 15px;
       display: none;
       flex-direction: column;
       align-items: center;
     }
+
     #skip-move-btn {
       padding: 10px 15px;
       background: #8d6e63;
@@ -233,7 +318,11 @@
       font-size: 16px;
       transition: background 0.3s ease;
     }
-    #skip-move-btn:hover { background: #6d4c41; }
+
+    #skip-move-btn:hover {
+      background: #6d4c41;
+    }
+
     #tile-preview-container {
       width: 60px;
       height: 60px;
@@ -245,15 +334,17 @@
       background: #fff;
       position: relative;
       transition: border 0.3s ease;
+      z-index: 2;
     }
-    /* Red overlay for invalid tile orientation */
+
+    /* Red overlay for invalid tile orientation in tile preview */
     #invalid-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(255, 0, 0, 0.3);
+      background: rgba(255, 0, 0, 0.8);
       color: red;
       font-size: 24px;
       font-weight: bold;
@@ -263,17 +354,23 @@
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.3s ease;
+      z-index: 3;
     }
+
     #tile-preview-container.invalid #invalid-overlay {
       opacity: 1;
     }
+
     #tile-preview {
       width: 100%;
       height: 100%;
       background-size: cover;
       background-repeat: no-repeat;
       display: block;
+      position: relative;
+      z-index: 2;
     }
+
     /* =================== Right Panel: Configuration and Event Log =================== */
     #log-panel {
       width: 550px;
@@ -281,18 +378,21 @@
       flex-direction: column;
       height: 100%;
       border-left: 4px solid #8d6e63;
-      box-shadow: -4px 0 10px rgba(0,0,0,0.3);
+      box-shadow: -4px 0 10px rgba(0, 0, 0, 0.3);
     }
+
     #config-panel {
       flex: 1;
       padding: 10px;
       overflow-y: auto;
       border-bottom: 1px solid #8d6e63;
     }
+
     #config-panel h3 {
       margin-top: 0;
       text-align: center;
     }
+
     /* Configuration Buttons */
     #config-buttons {
       display: flex;
@@ -300,23 +400,29 @@
       gap: 10px;
       margin-top: 10px;
     }
+
     #config-table {
       width: 100%;
       border-collapse: collapse;
     }
-    #config-table th, #config-table td {
+
+    #config-table th,
+    #config-table td {
       border: 1px solid #8d6e63;
       padding: 5px;
       text-align: center;
     }
+
     #config-table input {
       width: 64px;
     }
+
     .input-container {
       display: flex;
       flex-direction: column;
       align-items: center;
     }
+
     .arrow-container {
       display: flex;
       justify-content: center;
@@ -324,6 +430,7 @@
       margin-top: 2px;
       flex-wrap: wrap;
     }
+
     .arrow-btn {
       font-size: 10px;
       line-height: 1;
@@ -335,24 +442,29 @@
       background: #f8f1e4;
       cursor: pointer;
     }
+
     /* =================== Event Log =================== */
     #event-log-container {
       flex: 1;
       padding: 10px;
       overflow-y: auto;
     }
+
     #event-log-container h3 {
       margin-top: 0;
       text-align: center;
     }
+
     #event-log {
       width: 100%;
     }
+
     /* =================== Game Buttons (Below Board) =================== */
     #game-buttons {
       margin-top: 15px;
       text-align: center;
     }
+
     .btn {
       padding: 10px 15px;
       margin: 10px;
@@ -364,8 +476,11 @@
       font-size: 16px;
       transition: background 0.3s ease;
     }
-    .btn:hover { background: #6d4c41; }
-    
+
+    .btn:hover {
+      background: #6d4c41;
+    }
+
     /* =================== Mobile Responsive Styles =================== */
     @media only screen and (max-width: 768px) {
       #game-container {
@@ -373,10 +488,14 @@
         height: auto;
         padding: 5px;
       }
-      #control-panel, #board-container, #log-panel {
+
+      #control-panel,
+      #board-container,
+      #log-panel {
         width: 100%;
         margin: 5px 0;
       }
+
       #board {
         grid-template-columns: repeat(12, 30px);
         grid-template-rows: repeat(12, 30px);
@@ -384,26 +503,32 @@
         padding: 5px;
         border-width: 2px;
       }
+
       .cell {
         width: 30px;
         height: 30px;
       }
+
       .player {
         width: 18px;
         height: 18px;
         border-width: 1px;
       }
+
       #turn-info p {
         font-size: 14px;
         padding: 4px 8px;
       }
+
       #message {
         font-size: 16px;
       }
+
       .btn {
         padding: 8px 12px;
         font-size: 14px;
       }
+
       #tile-preview-container {
         width: 40px;
         height: 40px;
@@ -411,6 +536,7 @@
     }
   </style>
 </head>
+
 <body>
   <div id="game-container">
     <!-- Left Panel: Controls (always visible) -->
@@ -430,9 +556,7 @@
           <div id="invalid-overlay">!</div>
         </div>
         <button id="rotate-btn" class="btn">Gira 90º</button>
-        <!-- confirm-tile-btn is hidden (confirmation is by board click) -->
-        <button id="confirm-tile-btn" class="btn" style="display:none;">Confirma peça</button>
-        <!-- Tile-back button appears if no valid rotation exists -->
+        <!-- Confirmation is done via board click; back button appears if no valid rotation -->
         <button id="tile-back-btn" class="btn" style="display:none;">Cancelar exploració</button>
       </div>
       <!-- Move controls -->
@@ -463,7 +587,9 @@
           <tbody>
             <tr>
               <td>Cruce</td>
-              <td class="preview-cell"><div class="tile tile-cross" style="width:50px;height:50px;"></div></td>
+              <td class="preview-cell">
+                <div class="tile tile-cross" style="width:50px;height:50px;"></div>
+              </td>
               <td>
                 <div class="input-container">
                   <input type="number" min="0" value="10" data-type="cross">
@@ -501,7 +627,9 @@
             <!-- Similar rows for Curva, Bifurcació, Recta, Tancat -->
             <tr>
               <td>Curva</td>
-              <td class="preview-cell"><div class="tile tile-curve" style="width:50px;height:50px;"></div></td>
+              <td class="preview-cell">
+                <div class="tile tile-curve" style="width:50px;height:50px;"></div>
+              </td>
               <td>
                 <div class="input-container">
                   <input type="number" min="0" value="10" data-type="curve">
@@ -538,7 +666,9 @@
             </tr>
             <tr>
               <td>Bifurcació</td>
-              <td class="preview-cell"><div class="tile tile-t" style="width:50px;height:50px;"></div></td>
+              <td class="preview-cell">
+                <div class="tile tile-t" style="width:50px;height:50px;"></div>
+              </td>
               <td>
                 <div class="input-container">
                   <input type="number" min="0" value="10" data-type="t">
@@ -575,7 +705,9 @@
             </tr>
             <tr>
               <td>Recta</td>
-              <td class="preview-cell"><div class="tile tile-straight" style="width:50px;height:50px;"></div></td>
+              <td class="preview-cell">
+                <div class="tile tile-straight" style="width:50px;height:50px;"></div>
+              </td>
               <td>
                 <div class="input-container">
                   <input type="number" min="0" value="10" data-type="straight">
@@ -612,7 +744,9 @@
             </tr>
             <tr>
               <td>Tancat</td>
-              <td class="preview-cell"><div class="tile tile-deadend" style="width:50px;height:50px;"></div></td>
+              <td class="preview-cell">
+                <div class="tile tile-deadend" style="width:50px;height:50px;"></div>
+              </td>
               <td>
                 <div class="input-container">
                   <input type="number" min="0" value="10" data-type="deadend">
@@ -660,11 +794,11 @@
       </div>
     </div>
   </div>
-  
+
   <script>
     // Declare global variable
     var game = null;
-    
+
     // Global propagation functions
     function propagateLeft(btn) {
       let td = btn.closest("td");
@@ -730,7 +864,7 @@
         }
       });
     }
-    
+
     // Global mappings and base definitions
     const playerColors = {
       player1: "#2196F3",
@@ -757,7 +891,7 @@
       straight: { edges: { N: true, E: false, S: true, W: false } },
       deadend: { edges: { N: true, E: false, S: false, W: false } }
     };
-    
+
     // Global class definitions
     class Tile {
       constructor(type, edges, special = null) {
@@ -777,7 +911,7 @@
         return newTile;
       }
     }
-    
+
     class Cell {
       constructor(x, y) {
         this.x = x;
@@ -786,7 +920,7 @@
         this.player = null;
       }
     }
-    
+
     class Player {
       constructor(name, x, y, cssClass) {
         this.name = name;
@@ -796,7 +930,7 @@
         this.pool = {};
       }
     }
-    
+
     class Game {
       constructor() {
         this.size = 12;
@@ -829,44 +963,59 @@
         }
       }
       initSpecialTiles() {
-        // For special cells, we now assign fixed overlays (the tile remains placed regardless of overlays)
-        // Entrance and exit remain as before:
-        this.getCell(1,12).tile = new Tile("entrance", {N: true, E: true, S: false, W: false}, "entrance");
-        this.getCell(12,1).tile = new Tile("entrance", {N: false, E: false, S: true, W: true}, "entrance");
-        this.getCell(12,12).tile = new Tile("entrance", {N: true, E: false, S: false, W: true}, "entrance");
-        this.getCell(1,1).tile = new Tile("exit", {N: false, E: true, S: true, W: false}, "exit");
-        // Treasure cells: update types as specified
-        // (4,4) should be a deadend with connection from West. (i.e. edges: {N:false, E:false, S:false, W:true})
-        let t = new Tile("deadend", {N: false, E: false, S: false, W: true});
-        this.getCell(4,4).tile = t;
-        // (9,4) is a deadend (we keep it as before – rotated once, connection from East)
-        t = new Tile("deadend", baseTiles["deadend"].edges);
+        // Four corners now become T–junctions (type "t") with special flag "corner"
+        // (1,1): desired open edges: North, East, and South.
+        let tTile = new Tile("t", baseTiles["t"].edges, "corner");
+        // Rotate by 90° to get open: N, E, S (closed W)
+        for (let i = 0; i < 1; i++) { tTile.rotate(); }
+        this.getCell(1, 1).tile = tTile;
+        // (12,1): desired open edges: North, West, and South.
+        tTile = new Tile("t", baseTiles["t"].edges, "corner");
+        for (let i = 0; i < 3; i++) { tTile.rotate(); }
+        this.getCell(12, 1).tile = tTile;
+        // (1,12): desired open edges: South, East, and North.
+        tTile = new Tile("t", baseTiles["t"].edges, "corner");
+        for (let i = 0; i < 1; i++) { tTile.rotate(); }
+        this.getCell(1, 12).tile = tTile;
+        // (12,12): desired open edges: South, West, and North.
+        tTile = new Tile("t", baseTiles["t"].edges, "corner");
+        for (let i = 0; i < 3; i++) { tTile.rotate(); }
+        this.getCell(12, 12).tile = tTile;
+
+        // Treasure cells:
+        // (4,4): Deadend with only West connection; force rotation to 270°
+        let t = new Tile("deadend", { N: false, E: false, S: false, W: true }, "treasure");
+        t.rotation = 270;
+        this.getCell(4, 4).tile = t;
+        // (9,4): Deadend rotated once (connection from East)
+        t = new Tile("deadend", baseTiles["deadend"].edges, "treasure");
         t.rotate();
-        this.getCell(9,4).tile = t;
-        // (4,9) is a deadend rotated three times (connection from West)
-        t = new Tile("deadend", baseTiles["deadend"].edges);
+        this.getCell(9, 4).tile = t;
+        // (4,9): Deadend rotated three times (connection from West)
+        t = new Tile("deadend", baseTiles["deadend"].edges, "treasure");
         t.rotate(); t.rotate(); t.rotate();
-        this.getCell(4,9).tile = t;
-        // (9,9) is a deadend rotated once (connection from East)
-        t = new Tile("deadend", baseTiles["deadend"].edges);
+        this.getCell(4, 9).tile = t;
+        // (9,9): Deadend rotated once (connection from East)
+        t = new Tile("deadend", baseTiles["deadend"].edges, "treasure");
         t.rotate();
-        this.getCell(9,9).tile = t;
-        // Minotaur cells: update per previous definitions.
+        this.getCell(9, 9).tile = t;
+
+        // Minotaur cells:
         // (6,6): Curve rotated once (connecting (7,6) and (6,7))
-        t = new Tile("curve", baseTiles["curve"].edges);
+        t = new Tile("curve", baseTiles["curve"].edges, "minotaur");
         t.rotate();
-        this.getCell(6,6).tile = t;
-        // (7,6): T bifurcation rotated 180° (connects (6,6), (8,6), (7,7))
-        t = new Tile("t", baseTiles["t"].edges);
+        this.getCell(6, 6).tile = t;
+        // (7,6): T–tile rotated 180° (connecting (6,6), (8,6), (7,7))
+        t = new Tile("t", baseTiles["t"].edges, "minotaur");
         t.rotate(); t.rotate();
-        this.getCell(7,6).tile = t;
-        // (7,7): T bifurcation rotated 270° (connects (7,6), (7,8), (6,7))
-        t = new Tile("t", baseTiles["t"].edges);
+        this.getCell(7, 6).tile = t;
+        // (7,7): T–tile rotated 270° (connecting (7,6), (7,8), (6,7))
+        t = new Tile("t", baseTiles["t"].edges, "minotaur");
         t.rotate(); t.rotate(); t.rotate();
-        this.getCell(7,7).tile = t;
-        // (6,7): T bifurcation in base orientation (connects (5,7), (7,7), (6,6))
-        t = new Tile("t", baseTiles["t"].edges);
-        this.getCell(6,7).tile = t;
+        this.getCell(7, 7).tile = t;
+        // (6,7): T–tile in base orientation (connecting (5,7), (7,7), (6,6))
+        t = new Tile("t", baseTiles["t"].edges, "minotaur");
+        this.getCell(6, 7).tile = t;
       }
       initPlayers() {
         this.players.push(new Player("Jugador 1", 1, 12, "player1"));
@@ -884,42 +1033,79 @@
         const boardDiv = document.getElementById("board");
         boardDiv.innerHTML = "";
         const currentPlayer = this.getCurrentPlayer();
-        // Only compute overlays if an active tile exists.
-        const adjacent = (this.activeTile) ? this.getAdjacentCoords(currentPlayer.x, currentPlayer.y) : [];
+        let adjacent = [];
+        if (this.phase === "rotate" || this.phase === "move") {
+          adjacent = this.getAdjacentCoords(currentPlayer.x, currentPlayer.y);
+        }
         for (let y = 1; y <= this.size; y++) {
           for (let x = 1; x <= this.size; x++) {
             const cell = this.getCell(x, y);
             const cellDiv = document.createElement("div");
             cellDiv.classList.add("cell");
-            // Apply overlays only if cell has no tile (i.e. is empty) and if an active tile is drawn.
-            if (this.activeTile && !cell.tile && adjacent.find(c => c.x === x && c.y === y)) {
-              if (this.validCells.find(c => c.x === x && c.y === y))
-                cellDiv.classList.add("highlight");
-              else
-                cellDiv.classList.add("invalid-highlight");
+            cellDiv.dataset.x = x;
+            cellDiv.dataset.y = y;
+            // Append dynamic overlay only in active phases and only for adjacent cells
+            if (this.activeTile && adjacent.find(c => c.x === x && c.y === y)) {
+              let overlayDiv = document.createElement("div");
+              overlayDiv.classList.add("overlay");
+              if (this.phase === "rotate") {
+                if (this.validCells.find(c => c.x === x && c.y === y))
+                  overlayDiv.classList.add("valid");
+                else
+                  overlayDiv.classList.add("invalid");
+              } else if (this.phase === "move") {
+                if (this.validCells.find(c => c.x === x && c.y === y))
+                  overlayDiv.classList.add("valid");
+                else
+                  overlayDiv.classList.add("invalid");
+              }
+              overlayDiv.style.position = "absolute";
+              overlayDiv.style.top = "0";
+              overlayDiv.style.left = "0";
+              overlayDiv.style.width = "100%";
+              overlayDiv.style.height = "100%";
+              overlayDiv.style.zIndex = "3";
+              overlayDiv.style.pointerEvents = "none";
+              cellDiv.appendChild(overlayDiv);
             }
+            // Render tile if present
+            if (cell.tile) {
+              const tileDiv = document.createElement("div");
+              tileDiv.classList.add("tile");
+              tileDiv.classList.add("tile-" + cell.tile.type);
+              tileDiv.style.transform = "rotate(" + cell.tile.rotation + "deg)";
+              tileDiv.style.position = "absolute";
+              tileDiv.style.top = "0";
+              tileDiv.style.left = "0";
+              tileDiv.style.width = "100%";
+              tileDiv.style.height = "100%";
+              tileDiv.style.zIndex = "2";
+              cellDiv.appendChild(tileDiv);
+              // Add fixed special overlay for treasure, minotaur, or corner cells (z-index 1)
+              if (cell.tile.special === "treasure" || cell.tile.special === "minotaur" || cell.tile.special === "corner") {
+                const specOverlay = document.createElement("div");
+                specOverlay.classList.add("special-overlay");
+                specOverlay.classList.add(cell.tile.special);
+                specOverlay.style.zIndex = "1";
+                cellDiv.appendChild(specOverlay);
+              }
+            }
+            // Add player marker if present
             if (cell.player) {
               const playerDiv = document.createElement("div");
               playerDiv.classList.add("player");
               playerDiv.innerText = cell.player.name.replace("Jugador ", "J");
               if (cell.player.name === currentPlayer.name)
                 playerDiv.classList.add("active-marker");
+              playerDiv.style.zIndex = "4";
               cellDiv.appendChild(playerDiv);
             }
-            cellDiv.dataset.x = x;
-            cellDiv.dataset.y = y;
+            // Add coordinate label at the bottom (z-index 0)
             const coordSpan = document.createElement("span");
             coordSpan.classList.add("cell-coord");
             coordSpan.innerText = x + "," + y;
+            coordSpan.style.zIndex = "0";
             cellDiv.appendChild(coordSpan);
-            if (cell.tile) {
-              const tileDiv = document.createElement("div");
-              tileDiv.classList.add("tile");
-              // For special cells, render the actual tile type.
-              tileDiv.classList.add("tile-" + cell.tile.type);
-              tileDiv.style.transform = "rotate(" + cell.tile.rotation + "deg)";
-              cellDiv.appendChild(tileDiv);
-            }
             cellDiv.addEventListener("click", () => this.handleCellClick(x, y));
             boardDiv.appendChild(cellDiv);
           }
@@ -1072,7 +1258,6 @@
         const adj = this.getAdjacentCoords(current.x, current.y);
         return adj.filter(coord => {
           const cell = this.getCell(coord.x, coord.y);
-          // Omit cells that already have a tile (i.e. special cells)
           if (cell.tile) return false;
           if (!current.tile.edges[coord.dir] || !this.activeTile.edges[this.getOpposite(coord.dir)]) {
             return false;
@@ -1110,9 +1295,7 @@
         });
         for (let i = 0; i < 4; i++) {
           let testTile = this.activeTile.clone();
-          for (let j = 0; j < i; j++) {
-            testTile.rotate();
-          }
+          for (let j = 0; j < i; j++) { testTile.rotate(); }
           for (let coord of freeAdj) {
             if (current.tile.edges[coord.dir] && testTile.edges[this.getOpposite(coord.dir)]) {
               if (testTile.type === "curve") {
@@ -1146,15 +1329,19 @@
       }
       validateActiveTile() {
         if (this.activeTile) {
-          if (!this.anyRotationValid()) {
-            // Show red invalid overlay
-            document.getElementById("tile-preview-container").classList.add("invalid");
-            document.getElementById("confirm-tile-btn").style.display = "none";
-            document.getElementById("tile-back-btn").style.display = "inline-block";
-          } else {
-            document.getElementById("tile-preview-container").classList.remove("invalid");
-            document.getElementById("confirm-tile-btn").style.display = "none";
-            document.getElementById("tile-back-btn").style.display = "none";
+          const previewContainer = document.getElementById("tile-preview-container");
+          const confirmBtn = document.getElementById("confirm-tile-btn");
+          const backBtn = document.getElementById("tile-back-btn");
+          if (previewContainer && confirmBtn && backBtn) {
+            if (!this.anyRotationValid()) {
+              previewContainer.classList.add("invalid");
+              confirmBtn.style.display = "none";
+              backBtn.style.display = "inline-block";
+            } else {
+              previewContainer.classList.remove("invalid");
+              confirmBtn.style.display = "none";
+              backBtn.style.display = "none";
+            }
           }
         }
       }
@@ -1263,7 +1450,7 @@
         document.getElementById("tile-controls").style.display = "flex";
         document.getElementById("move-controls").style.display = "none";
         this.updateTileFeedback();
-        this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Pots girar-la i, si és vàlida, clicar sobre la casella destacada per col·locar-la.");
+        this.setMessage("Torn de " + this.getCurrentPlayer().name + ". Peça obtinguda: " + tileNamesCat[this.activeTile.type] + ". Clica sobre la casella destacada per col·locar-la.");
       }
       moveTurn() {
         this.hasMoved = true;
@@ -1322,9 +1509,9 @@
       endTurn() {
         document.getElementById("spinner").style.display = "block";
         this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-        setTimeout(() => { 
+        setTimeout(() => {
           document.getElementById("spinner").style.display = "none";
-          this.startTurn(); 
+          this.startTurn();
         }, 500);
       }
       updateTileFeedback() {
@@ -1346,9 +1533,7 @@
         });
         for (let i = 0; i < 4; i++) {
           let testTile = this.activeTile.clone();
-          for (let j = 0; j < i; j++) {
-            testTile.rotate();
-          }
+          for (let j = 0; j < i; j++) { testTile.rotate(); }
           for (let coord of freeAdj) {
             if (current.tile.edges[coord.dir] && testTile.edges[this.getOpposite(coord.dir)]) {
               if (testTile.type === "curve") {
@@ -1370,7 +1555,7 @@
         return false;
       }
     }
-    
+
     // Configuration functions
     function readConfiguration() {
       const inputs = document.querySelectorAll("#config-table input");
@@ -1387,18 +1572,18 @@
       });
       return pools;
     }
-    
+
     function disableConfiguration() {
       const inputs = document.querySelectorAll("#config-table input");
       inputs.forEach(input => input.disabled = true);
       document.getElementById("config-start-btn").disabled = true;
     }
-    
+
     function enableConfigurationButtons(startEnabled) {
       document.getElementById("config-start-btn").disabled = !startEnabled;
       document.getElementById("config-reset-btn").disabled = startEnabled;
     }
-    
+
     function updateConfigTable() {
       let inputs = document.querySelectorAll("#config-table input");
       inputs.forEach(input => {
@@ -1410,11 +1595,11 @@
         }
       });
     }
-    
+
     function resetGame() {
       location.reload();
     }
-    
+
     function startGame() {
       const pools = readConfiguration();
       game = new Game();
@@ -1425,17 +1610,14 @@
       enableConfigurationButtons(false);
       game.startTurn();
     }
-    
+
     // Attach event listeners after DOM is loaded.
-    window.onload = function() {
+    window.onload = function () {
       document.getElementById("config-start-btn").addEventListener("click", startGame);
       document.getElementById("config-reset-btn").addEventListener("click", resetGame);
-      
+
       document.getElementById("rotate-btn").addEventListener("click", () => {
         game.rotateActiveTile();
-      });
-      document.getElementById("confirm-tile-btn").addEventListener("click", () => {
-        // Not used: confirmation is by board click.
       });
       document.getElementById("tile-back-btn").addEventListener("click", () => {
         let tileType = game.activeTile.type;
@@ -1466,7 +1648,7 @@
           game.endTurn();
         }
       });
-      
+
       document.getElementById("explore-btn").addEventListener("click", () => {
         if (document.getElementById("explore-btn").disabled) {
           game.setMessage("No pots explorar en aquesta situació.");
@@ -1487,4 +1669,5 @@
     };
   </script>
 </body>
+
 </html>
