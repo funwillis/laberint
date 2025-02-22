@@ -1033,10 +1033,12 @@
         const boardDiv = document.getElementById("board");
         boardDiv.innerHTML = "";
         const currentPlayer = this.getCurrentPlayer();
+        // Compute adjacent cells from the current player's cell
         let adjacent = [];
-        if (this.phase === "rotate" || this.phase === "move") {
+        if (this.phase === "rotate" || this.phase === "place" || this.phase === "move") {
           adjacent = this.getAdjacentCoords(currentPlayer.x, currentPlayer.y);
         }
+
         for (let y = 1; y <= this.size; y++) {
           for (let x = 1; x <= this.size; x++) {
             const cell = this.getCell(x, y);
@@ -1044,31 +1046,31 @@
             cellDiv.classList.add("cell");
             cellDiv.dataset.x = x;
             cellDiv.dataset.y = y;
-            // Append dynamic overlay only in active phases and only for adjacent cells
-            if (this.activeTile && adjacent.find(c => c.x === x && c.y === y)) {
+
+            // If in an active phase and the cell is adjacent, append a dynamic overlay
+            if (this.activeTile && (this.phase === "rotate" || this.phase === "place" || this.phase === "move")
+              && adjacent.find(c => c.x === x && c.y === y)) {
               let overlayDiv = document.createElement("div");
               overlayDiv.classList.add("overlay");
-              if (this.phase === "rotate") {
-                if (this.validCells.find(c => c.x === x && c.y === y))
-                  overlayDiv.classList.add("valid");
-                else
-                  overlayDiv.classList.add("invalid");
-              } else if (this.phase === "move") {
-                if (this.validCells.find(c => c.x === x && c.y === y))
-                  overlayDiv.classList.add("valid");
-                else
-                  overlayDiv.classList.add("invalid");
+              // If the cell is in the computed validCells, mark as valid; otherwise invalid
+              if (this.validCells.find(c => c.x === x && c.y === y)) {
+                overlayDiv.classList.add("valid");
+              } else {
+                overlayDiv.classList.add("invalid");
               }
               overlayDiv.style.position = "absolute";
               overlayDiv.style.top = "0";
               overlayDiv.style.left = "0";
               overlayDiv.style.width = "100%";
               overlayDiv.style.height = "100%";
-              overlayDiv.style.zIndex = "3";
+              overlayDiv.style.zIndex = "0"; // lowest, so that the tile's svg (z-index 2) is on top
               overlayDiv.style.pointerEvents = "none";
               cellDiv.appendChild(overlayDiv);
             }
-            // Render tile if present
+
+            // (Then render tile, player marker, coordinate label, etc.)
+            // ...
+            // For example, if cell.tile exists, create tileDiv with z-index "2"
             if (cell.tile) {
               const tileDiv = document.createElement("div");
               tileDiv.classList.add("tile");
@@ -1081,31 +1083,34 @@
               tileDiv.style.height = "100%";
               tileDiv.style.zIndex = "2";
               cellDiv.appendChild(tileDiv);
-              // Add fixed special overlay for treasure, minotaur, or corner cells (z-index 1)
+              // Append fixed special overlays if needed (z-index 1)
               if (cell.tile.special === "treasure" || cell.tile.special === "minotaur" || cell.tile.special === "corner") {
                 const specOverlay = document.createElement("div");
-                specOverlay.classList.add("special-overlay");
-                specOverlay.classList.add(cell.tile.special);
+                specOverlay.classList.add("special-overlay", cell.tile.special);
                 specOverlay.style.zIndex = "1";
                 cellDiv.appendChild(specOverlay);
               }
             }
-            // Add player marker if present
+
+            // Add player marker (z-index 4)
             if (cell.player) {
               const playerDiv = document.createElement("div");
               playerDiv.classList.add("player");
               playerDiv.innerText = cell.player.name.replace("Jugador ", "J");
-              if (cell.player.name === currentPlayer.name)
+              if (cell.player.name === currentPlayer.name) {
                 playerDiv.classList.add("active-marker");
+              }
               playerDiv.style.zIndex = "4";
               cellDiv.appendChild(playerDiv);
             }
-            // Add coordinate label at the bottom (z-index 0)
+
+            // Add coordinate label (lowest layer)
             const coordSpan = document.createElement("span");
             coordSpan.classList.add("cell-coord");
             coordSpan.innerText = x + "," + y;
-            coordSpan.style.zIndex = "0";
+            coordSpan.style.zIndex = "5";
             cellDiv.appendChild(coordSpan);
+
             cellDiv.addEventListener("click", () => this.handleCellClick(x, y));
             boardDiv.appendChild(cellDiv);
           }
