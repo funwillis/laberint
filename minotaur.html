@@ -142,8 +142,13 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
+    /* Valid placement cells: highlight with pale green overlay */
     .cell.highlight {
       background: #c8e6c9;
+    }
+    /* Adjacent cells that are not valid for placement get a red overlay */
+    .cell.invalid-highlight {
+      background: #ffb6c1;
     }
     /* =================== Player Markers =================== */
     .player {
@@ -165,11 +170,11 @@
       box-shadow: 0 0 8px rgba(0,0,0,0.5);
       z-index: 15;
     }
-    /* Active marker glow changed to olive green (#556B2F) */
+    /* Active marker: now with a lighter green glow */
     .active-marker {
-      box-shadow: 0 0 12px 4px #556B2F;
+      box-shadow: 0 0 12px 4px #90ee90;
       transform: translate(-50%, -50%) scale(1.3);
-      border-color: #556B2F;
+      border-color: #90ee90;
       transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     }
     .cell-coord {
@@ -257,7 +262,7 @@
       position: relative;
       transition: border 0.3s ease;
     }
-    /* Red overlay for invalid tile orientation */
+    /* Red overlay for invalid tile orientation (used in tile preview) */
     #invalid-overlay {
       position: absolute;
       top: 0;
@@ -443,7 +448,7 @@
         <button id="rotate-btn" class="btn">Gira 90º</button>
         <!-- confirm-tile-btn is hidden (confirmation is by board click) -->
         <button id="confirm-tile-btn" class="btn" style="display:none;">Confirma peça</button>
-        <!-- Tile-back button appears if no rotation is valid -->
+        <!-- Tile-back button appears if no valid rotation exists -->
         <button id="tile-back-btn" class="btn" style="display:none;">Cancelar exploració</button>
       </div>
       <!-- Move controls -->
@@ -871,11 +876,23 @@
         const boardDiv = document.getElementById("board");
         boardDiv.innerHTML = "";
         const currentPlayer = this.getCurrentPlayer();
+        // Get all adjacent cells to current player's cell for overlay purposes.
+        const adjacent = this.getAdjacentCoords(currentPlayer.x, currentPlayer.y);
+        boardDiv.childNodes; // not needed but for clarity
         for (let y = 1; y <= this.size; y++) {
           for (let x = 1; x <= this.size; x++) {
             const cell = this.getCell(x, y);
             const cellDiv = document.createElement("div");
             cellDiv.classList.add("cell");
+            // If this cell is adjacent to current player's cell...
+            if (adjacent.find(c => c.x === x && c.y === y)) {
+              // If not a valid placement cell, add red overlay
+              if (!this.validCells.find(c => c.x === x && c.y === y)) {
+                cellDiv.classList.add("invalid-highlight");
+              } else {
+                cellDiv.classList.add("highlight");
+              }
+            }
             if (cell.player) {
               const playerDiv = document.createElement("div");
               playerDiv.classList.add("player");
@@ -902,9 +919,6 @@
               }
               tileDiv.style.transform = "rotate(" + cell.tile.rotation + "deg)";
               cellDiv.appendChild(tileDiv);
-            }
-            if (this.validCells.find(c => c.x === x && c.y === y)) {
-              cellDiv.classList.add("highlight");
             }
             cellDiv.addEventListener("click", () => this.handleCellClick(x, y));
             boardDiv.appendChild(cellDiv);
@@ -1124,7 +1138,6 @@
         this.validateActiveTile();
         if (this.activeTile && this.anyRotationValid()) {
           this.validCells = this.getExplorableCells();
-          // Set phase to "place" so board clicks confirm placement.
           this.phase = "place";
         } else {
           this.phase = "rotate";
@@ -1134,19 +1147,18 @@
       validateActiveTile() {
         if (this.activeTile) {
           if (!this.anyRotationValid()) {
-            // Show red invalid overlay and show tile-back button.
             document.getElementById("tile-preview-container").classList.add("invalid");
             document.getElementById("confirm-tile-btn").style.display = "none";
             document.getElementById("tile-back-btn").style.display = "inline-block";
           } else {
             document.getElementById("tile-preview-container").classList.remove("invalid");
-            document.getElementById("confirm-tile-btn").style.display = "none"; // confirmation is by board click
+            document.getElementById("confirm-tile-btn").style.display = "none";
             document.getElementById("tile-back-btn").style.display = "none";
           }
         }
       }
       rotateActiveTile() {
-        if (this.activeTile) {  // Removed phase check to allow rotation in "place" phase as well.
+        if (this.activeTile) {
           this.activeTile.rotate();
           this.updateTileFeedback();
         }
@@ -1315,7 +1327,6 @@
         }, 500);
       }
       updateTileFeedback() {
-        // Update feedback immediately after drawing or rotation.
         this.updateTilePreview();
         this.validateActiveTile();
         if (this.activeTile && this.anyRotationValid()) {
