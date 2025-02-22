@@ -557,7 +557,7 @@
         </div>
         <button id="rotate-btn" class="btn">Gira 90º</button>
         <!-- Confirmation is done via board click; back button appears if no valid rotation -->
-        <button id="tile-back-btn" class="btn" style="display:none;">Cancelar exploració</button>
+        <button id="tile-back-btn" class="btn">Cancelar exploració</button>
       </div>
       <!-- Move controls -->
       <div id="move-controls">
@@ -1340,27 +1340,37 @@
         return false;
       }
       updateTileFeedback() {
-        // Update preview and check validity.
+        // Update the tile preview and validate the current active tile.
         this.updateTilePreview();
         this.validateActiveTile();
 
-        // If the active tile can be placed (in some rotation) then update valid cells and set phase to "place".
         if (this.activeTile && this.anyRotationValid()) {
-          this.validCells = this.getExplorableCells();
-          this.phase = "place";
+          // Compute the explorable cells for the current rotation.
+          const explorable = this.getExplorableCells();
+          if (explorable.length > 0) {
+            this.validCells = explorable;
+            this.phase = "place";
+            // Ensure the cancel button is hidden when there are valid placements.
+            document.getElementById("tile-back-btn").style.display = "none";
+          } else {
+            // No adjacent explorable cell, so show the cancel button for user to click.
+            this.phase = "rotate";
+            const backBtn = document.getElementById("tile-back-btn");
+            if (backBtn) {
+              backBtn.innerText = (!this.hasMoved) ? "Enrera" : "Cancela";
+              backBtn.style.display = "inline-block";
+            }
+          }
         } else {
-          // Otherwise, remain in rotate phase.
+          // No rotation is valid at all; show the cancel button.
           this.phase = "rotate";
-          // If still invalid after a short delay, automatically trigger the tile-back button.
-          if (this.activeTile && !this.anyRotationValid()) {
-            setTimeout(() => {
-              // Double-check the state before auto-cancelling.
-              if (this.activeTile && !this.anyRotationValid() && this.phase === "rotate") {
-                document.getElementById("tile-back-btn").click();
-              }
-            }, 1000);
+          const backBtn = document.getElementById("tile-back-btn");
+          if (backBtn) {
+            backBtn.innerText = (!this.hasMoved) ? "Enrera" : "Cancela";
+            backBtn.style.display = "inline-block";
           }
         }
+        // Finally, re-render the board to update dynamic overlays.
         this.renderBoard();
       }
       validateActiveTile() {
