@@ -142,11 +142,10 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
-    /* Valid placement cells: highlight with pale green overlay */
+    /* Only apply overlays to cells without a tile (i.e. not special cells) */
     .cell.highlight {
       background: #c8e6c9;
     }
-    /* Adjacent cells that are not valid for placement get a red overlay */
     .cell.invalid-highlight {
       background: #ffb6c1;
     }
@@ -159,7 +158,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: #2196F3; /* uniform blue */
+      background: #2196F3;
       color: white;
       font-size: 12px;
       font-weight: bold;
@@ -194,26 +193,11 @@
       display: block;
       margin: auto;
     }
-    .tile-entrance {
-      background-color: #d2b48c;
-      border: 2px solid #8b4513;
-      border-radius: 4px;
-    }
-    .tile-exit {
-      background-color: #ef9a9a;
-      border: 2px solid #d32f2f;
-      border-radius: 4px;
-    }
-    .tile-treasure {
-      background-color: #ffe082;
-      border: 2px solid #fbc02d;
-      border-radius: 4px;
-    }
-    .tile-minotaur {
-      background-color: #ce93d8;
-      border: 2px solid #8e24aa;
-      border-radius: 4px;
-    }
+    /* For special cells, we preserve a fixed overlay (using our previous colors) */
+    .tile-entrance { background-color: #d2b48c; border: 2px solid #8b4513; border-radius: 4px; }
+    .tile-exit { background-color: #ef9a9a; border: 2px solid #d32f2f; border-radius: 4px; }
+    .tile-treasure { background-color: #ffe082; border: 2px solid #fbc02d; border-radius: 4px; }
+    .tile-minotaur { background-color: #ce93d8; border: 2px solid #8e24aa; border-radius: 4px; }
     .tile-deadend {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><line x1='50' y1='0' x2='50' y2='60' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/><line x1='40' y1='60' x2='60' y2='60' stroke='%235d4037' stroke-width='20' stroke-linecap='round'/></svg>");
       background-size: 100% 100%;
@@ -262,7 +246,7 @@
       position: relative;
       transition: border 0.3s ease;
     }
-    /* Red overlay for invalid tile orientation (used in tile preview) */
+    /* Red overlay for invalid tile orientation */
     #invalid-overlay {
       position: absolute;
       top: 0;
@@ -845,20 +829,44 @@
         }
       }
       initSpecialTiles() {
-        const placeSpecial = (x, y, specialType, baseType, edges) => {
-          const cell = this.getCell(x, y);
-          cell.tile = new Tile(baseType, edges, specialType);
-        };
-        placeSpecial(1, 12, 'entrance', 'entrance', {N: true, E: true, S: false, W: false});
-        placeSpecial(12, 1, 'entrance', 'entrance', {N: false, E: false, S: true, W: true});
-        placeSpecial(12, 12, 'entrance', 'entrance', {N: true, E: false, S: false, W: true});
-        placeSpecial(1, 1, 'exit', 'exit', {N: false, E: true, S: true, W: false});
-        [[4,4], [4,9], [9,4], [9,9]].forEach(coord => {
-          placeSpecial(coord[0], coord[1], 'treasure', 'treasure', {N: true, E: false, S: false, W: false});
-        });
-        [[6,6], [6,7], [7,6], [7,7]].forEach(coord => {
-          placeSpecial(coord[0], coord[1], 'minotaur', 'minotaur', {N: true, E: true, S: true, W: false});
-        });
+        // For special cells, we now assign fixed overlays (the tile remains placed regardless of overlays)
+        // Entrance and exit remain as before:
+        this.getCell(1,12).tile = new Tile("entrance", {N: true, E: true, S: false, W: false}, "entrance");
+        this.getCell(12,1).tile = new Tile("entrance", {N: false, E: false, S: true, W: true}, "entrance");
+        this.getCell(12,12).tile = new Tile("entrance", {N: true, E: false, S: false, W: true}, "entrance");
+        this.getCell(1,1).tile = new Tile("exit", {N: false, E: true, S: true, W: false}, "exit");
+        // Treasure cells: update types as specified
+        // (4,4) should be a deadend with connection from West. (i.e. edges: {N:false, E:false, S:false, W:true})
+        let t = new Tile("deadend", {N: false, E: false, S: false, W: true});
+        this.getCell(4,4).tile = t;
+        // (9,4) is a deadend (we keep it as before – rotated once, connection from East)
+        t = new Tile("deadend", baseTiles["deadend"].edges);
+        t.rotate();
+        this.getCell(9,4).tile = t;
+        // (4,9) is a deadend rotated three times (connection from West)
+        t = new Tile("deadend", baseTiles["deadend"].edges);
+        t.rotate(); t.rotate(); t.rotate();
+        this.getCell(4,9).tile = t;
+        // (9,9) is a deadend rotated once (connection from East)
+        t = new Tile("deadend", baseTiles["deadend"].edges);
+        t.rotate();
+        this.getCell(9,9).tile = t;
+        // Minotaur cells: update per previous definitions.
+        // (6,6): Curve rotated once (connecting (7,6) and (6,7))
+        t = new Tile("curve", baseTiles["curve"].edges);
+        t.rotate();
+        this.getCell(6,6).tile = t;
+        // (7,6): T bifurcation rotated 180° (connects (6,6), (8,6), (7,7))
+        t = new Tile("t", baseTiles["t"].edges);
+        t.rotate(); t.rotate();
+        this.getCell(7,6).tile = t;
+        // (7,7): T bifurcation rotated 270° (connects (7,6), (7,8), (6,7))
+        t = new Tile("t", baseTiles["t"].edges);
+        t.rotate(); t.rotate(); t.rotate();
+        this.getCell(7,7).tile = t;
+        // (6,7): T bifurcation in base orientation (connects (5,7), (7,7), (6,6))
+        t = new Tile("t", baseTiles["t"].edges);
+        this.getCell(6,7).tile = t;
       }
       initPlayers() {
         this.players.push(new Player("Jugador 1", 1, 12, "player1"));
@@ -876,31 +884,26 @@
         const boardDiv = document.getElementById("board");
         boardDiv.innerHTML = "";
         const currentPlayer = this.getCurrentPlayer();
-        // Get all adjacent cells to current player's cell for overlay purposes.
-        const adjacent = this.getAdjacentCoords(currentPlayer.x, currentPlayer.y);
-        boardDiv.childNodes; // not needed but for clarity
+        // Only compute overlays if an active tile exists.
+        const adjacent = (this.activeTile) ? this.getAdjacentCoords(currentPlayer.x, currentPlayer.y) : [];
         for (let y = 1; y <= this.size; y++) {
           for (let x = 1; x <= this.size; x++) {
             const cell = this.getCell(x, y);
             const cellDiv = document.createElement("div");
             cellDiv.classList.add("cell");
-            // If this cell is adjacent to current player's cell...
-            if (adjacent.find(c => c.x === x && c.y === y)) {
-              // If not a valid placement cell, add red overlay
-              if (!this.validCells.find(c => c.x === x && c.y === y)) {
-                cellDiv.classList.add("invalid-highlight");
-              } else {
+            // Apply overlays only if cell has no tile (i.e. is empty) and if an active tile is drawn.
+            if (this.activeTile && !cell.tile && adjacent.find(c => c.x === x && c.y === y)) {
+              if (this.validCells.find(c => c.x === x && c.y === y))
                 cellDiv.classList.add("highlight");
-              }
+              else
+                cellDiv.classList.add("invalid-highlight");
             }
             if (cell.player) {
               const playerDiv = document.createElement("div");
               playerDiv.classList.add("player");
-              // Display "J1", "J2", "J3" based on player's name.
               playerDiv.innerText = cell.player.name.replace("Jugador ", "J");
-              if (cell.player.name === currentPlayer.name) {
+              if (cell.player.name === currentPlayer.name)
                 playerDiv.classList.add("active-marker");
-              }
               cellDiv.appendChild(playerDiv);
             }
             cellDiv.dataset.x = x;
@@ -912,11 +915,8 @@
             if (cell.tile) {
               const tileDiv = document.createElement("div");
               tileDiv.classList.add("tile");
-              if (cell.tile.special) {
-                tileDiv.classList.add("tile-" + cell.tile.special);
-              } else {
-                tileDiv.classList.add("tile-" + cell.tile.type);
-              }
+              // For special cells, render the actual tile type.
+              tileDiv.classList.add("tile-" + cell.tile.type);
               tileDiv.style.transform = "rotate(" + cell.tile.rotation + "deg)";
               cellDiv.appendChild(tileDiv);
             }
@@ -1072,7 +1072,8 @@
         const adj = this.getAdjacentCoords(current.x, current.y);
         return adj.filter(coord => {
           const cell = this.getCell(coord.x, coord.y);
-          if (!cell || cell.tile) return false;
+          // Omit cells that already have a tile (i.e. special cells)
+          if (cell.tile) return false;
           if (!current.tile.edges[coord.dir] || !this.activeTile.edges[this.getOpposite(coord.dir)]) {
             return false;
           }
@@ -1133,7 +1134,6 @@
         return false;
       }
       updateTileFeedback() {
-        // Update feedback immediately after drawing or rotation.
         this.updateTilePreview();
         this.validateActiveTile();
         if (this.activeTile && this.anyRotationValid()) {
@@ -1147,6 +1147,7 @@
       validateActiveTile() {
         if (this.activeTile) {
           if (!this.anyRotationValid()) {
+            // Show red invalid overlay
             document.getElementById("tile-preview-container").classList.add("invalid");
             document.getElementById("confirm-tile-btn").style.display = "none";
             document.getElementById("tile-back-btn").style.display = "inline-block";
